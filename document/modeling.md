@@ -6,7 +6,7 @@
 | --- | --- |  --- | --- |
 | id | BIGINT | PK |  |
 | year | INT | NN | 년도 |
-| type | VARCHAR(10) | NN | KOREA, WORLD |
+| type | VARCHAR(10) | NN | 한국사, 세계사 구분 (KOREA, WORLD) |
 | content | TEXT | NN | 설명 |
 | created_at | TIMESTAMP | NN | 생성일시 |
 | updated_at | TIMESTAMP | NN | 수정일시 |
