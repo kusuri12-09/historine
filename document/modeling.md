@@ -17,7 +17,11 @@
 | --- | --- |  --- | --- |
 | id | BIGINT | PK |  |
 | title | VARCHAR(100) | NN | 제목 |
+| period | VARCHAR(50) | NN | 활동 시기 또는 생몰 기간 |
+| category | VARCHAR(100) | NN | 인물 분류 |
+| tags | TEXT[] | NN | 태그 목록 |
 | content | TEXT | NN | 설명 |
+| summary | TEXT | NN | 한줄 소개 |
 | created_at | TIMESTAMP | NN | 생성일시 |
 | updated_at | TIMESTAMP | NN | 수정일시 |
 
@@ -27,7 +31,11 @@
 | --- | --- |  --- | --- |
 | id | BIGINT | PK |  |
 | title | VARCHAR(100) | NN | 제목 |
+| period | VARCHAR(50) | NN | 사건 발생 시기 |
+| category | VARCHAR(100) | NN | 사건 분류 |
+| tags | TEXT[] | NN | 태그 목록 |
 | content | TEXT | NN | 설명 |
+| summary | TEXT | NN | 한줄 소개 |
 | created_at | TIMESTAMP | NN | 생성일시 |
 | updated_at | TIMESTAMP | NN | 수정일시 |
 

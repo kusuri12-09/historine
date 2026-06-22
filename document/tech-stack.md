@@ -3,6 +3,9 @@
 | 분야                 | 기술                          | 선정 이유                                       |
 | ------------------ | --------------------------- | ------------------------------------------- |
 | Frontend           | Next.js                     | SSR 지원, App Router 제공, 프론트엔드와 백엔드 통합 가능     |
+| Styling            | Tailwind CSS                | 디자인 토큰 기반 유틸리티 클래스로 빠르고 일관된 퍼블리싱 가능 |
+| UI Component       | Material UI                 | 버튼, 칩 등 검증된 접근성/상태 처리 컴포넌트 활용 |
+| Headless UI        | Radix UI                    | 내비게이션 등 상호작용 UI를 스타일 제약 없이 접근성 있게 구현 |
 | Backend            | Next.js Route Handler       | 별도 서버 없이 REST API 구현 가능, 개발 및 배포 복잡도 감소     |
 | Database           | PostgreSQL                  | 관계형 데이터 관리에 적합, Full Text Search 지원, 높은 안정성 |
 | ORM                | Prisma                      | Type-safe ORM, 마이그레이션 지원, 자동 타입 생성          |
@@ -23,6 +26,9 @@ Client
     ↓
 Next.js
  ├─ UI
+ │  ├─ Tailwind CSS
+ │  ├─ Material UI
+ │  └─ Radix UI
  ├─ Route Handler
  ├─ Auth.js
  ├─ Markdown Renderer
