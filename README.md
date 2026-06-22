@@ -4,6 +4,44 @@ HISTORINE은 대한민국 근대 국가 수립기, 특히 1800년대 후반부�
 
 연표, 인물, 사건 데이터를 웹 사이트로 제공하여 사용자가 시기별 흐름에 따라 근대사의 주요 변화를 이해할 수 있도록 돕는다.
 
+## 실행 방법
+
+### 1. 의존성 설치
+
+```bash
+npm install
+```
+
+### 2. 환경변수 설정
+
+`.env.example`을 참고해 `.env` 파일을 생성한다.
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/historine"
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="change-me"
+ADMIN_SESSION_SECRET="change-this-secret"
+```
+
+### 3. 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+브라우저에서 다음 주소로 접속한다.
+
+```text
+http://localhost:3000
+```
+
+### 4. 프로덕션 빌드
+
+```bash
+npm run build
+npm run start
+```
+
 ## 주요 기능
 
 ### 연표
