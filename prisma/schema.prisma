@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Timeline {
+  id        BigInt   @id @default(autoincrement())
+  year      Int
+  type      String   @db.VarChar(10)
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("timeline")
+}
+
+model Person {
+  id        BigInt   @id @default(autoincrement())
+  title     String   @db.VarChar(100)
+  period    String   @db.VarChar(50)
+  category  String   @db.VarChar(100)
+  tags      String[]
+  content   String
+  summary   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("person")
+}
+
+model Event {
+  id        BigInt   @id @default(autoincrement())
+  title     String   @db.VarChar(100)
+  period    String   @db.VarChar(50)
+  category  String   @db.VarChar(100)
+  tags      String[]
+  content   String
+  summary   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("event")
+}

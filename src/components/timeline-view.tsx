@@ -1,0 +1,71 @@
+import { PageHeading } from "@/components/page-heading";
+import { getTimelines } from "@/data/history";
+
+function timelineTone(type: "KOREA" | "WORLD") {
+  return type === "KOREA"
+    ? {
+        border: "border-historine-main/40",
+        bg: "bg-historine-main/10",
+        text: "text-historine-main"
+      }
+    : {
+        border: "border-historine-side/40",
+        bg: "bg-historine-side/10",
+        text: "text-historine-side"
+      };
+}
+
+export function TimelineView() {
+  const sortedTimelines = [...getTimelines()].sort((a, b) => a.year - b.year);
+
+  return (
+    <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">
+      <PageHeading
+        description="1800년대 후반부터 1900년대 극초반까지의 주요 흐름을 시간 순서로 확인합니다."
+        eyebrow="CHRONOLOGICAL ARCHIVE"
+        title="근대 국가 수립 연표"
+      />
+
+      {sortedTimelines.length === 0 ? (
+        <div className="rounded-lg border border-historine-border bg-historine-panel p-7 text-historine-muted">
+          등록된 연표가 없습니다.
+        </div>
+      ) : (
+        <div className="relative" aria-label="근대 국가 수립 연표">
+          <div className="space-y-20">
+            {sortedTimelines.map((item, index) => {
+              const tone = timelineTone(item.type);
+              const isLast = index === sortedTimelines.length - 1;
+
+              return (
+                <article
+                  className="relative grid gap-6 md:grid-cols-[144px_1fr] md:gap-14"
+                  key={item.id}
+                >
+                  <div className="relative flex md:justify-center">
+                    {!isLast ? (
+                      <div className="absolute left-[62px] top-[70px] hidden h-[calc(100%+80px)] w-px bg-historine-border md:block" />
+                    ) : null}
+                    <div
+                      className={`relative z-10 flex h-[70px] w-[124px] items-center justify-center rounded-2xl border ${tone.border} ${tone.bg} ${tone.text} text-[15px] font-extrabold`}
+                    >
+                      {item.year}
+                    </div>
+                  </div>
+                  <div className="pt-1">
+                    <h2 className="mb-2 text-[24px] font-extrabold text-historine-text">
+                      {item.title}
+                    </h2>
+                    <p className="max-w-4xl text-[17px] leading-8 text-historine-muted">
+                      {item.content}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
