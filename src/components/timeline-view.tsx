@@ -15,8 +15,8 @@ function timelineTone(type: "KOREA" | "WORLD") {
       };
 }
 
-export function TimelineView() {
-  const sortedTimelines = [...getTimelines()].sort((a, b) => a.year - b.year);
+export async function TimelineView() {
+  const sortedTimelines = await getTimelines();
 
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">
@@ -32,10 +32,10 @@ export function TimelineView() {
         </div>
       ) : (
         <div className="relative" aria-label="근대 국가 수립 연표">
-          <div className="space-y-20">
-            {sortedTimelines.map((item, index) => {
+          <div className="absolute left-[72px] top-[35px] hidden h-[calc(100%-70px)] w-1 -translate-x-1/2 rounded-full bg-historine-main md:block" />
+          <div className="relative z-10 space-y-20">
+            {sortedTimelines.map((item) => {
               const tone = timelineTone(item.type);
-              const isLast = index === sortedTimelines.length - 1;
 
               return (
                 <article
@@ -43,9 +43,7 @@ export function TimelineView() {
                   key={item.id}
                 >
                   <div className="relative flex md:justify-center">
-                    {!isLast ? (
-                      <div className="absolute left-[62px] top-[70px] hidden h-[calc(100%+80px)] w-px bg-historine-border md:block" />
-                    ) : null}
+                    <div className="absolute left-1/2 hidden h-[74px] w-[128px] -translate-x-1/2 rounded-2xl bg-historine-bg md:block" />
                     <div
                       className={`relative z-10 flex h-[70px] w-[124px] items-center justify-center rounded-2xl border ${tone.border} ${tone.bg} ${tone.text} text-[15px] font-extrabold`}
                     >
@@ -53,9 +51,6 @@ export function TimelineView() {
                     </div>
                   </div>
                   <div className="pt-1">
-                    <h2 className="mb-2 text-[24px] font-extrabold text-historine-text">
-                      {item.title}
-                    </h2>
                     <p className="max-w-4xl text-[17px] leading-8 text-historine-muted">
                       {item.content}
                     </p>

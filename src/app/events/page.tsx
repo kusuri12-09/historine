@@ -2,8 +2,10 @@ import { HistoricalCard } from "@/components/historical-card";
 import { PageHeading } from "@/components/page-heading";
 import { getEvents } from "@/data/history";
 
-export default function EventsPage() {
-  const events = getEvents();
+export const dynamic = "force-dynamic";
+
+export default async function EventsPage() {
+  const events = await getEvents();
 
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">

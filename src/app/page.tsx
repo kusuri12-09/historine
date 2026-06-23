@@ -1,5 +1,7 @@
 import { TimelineView } from "@/components/timeline-view";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
   return <TimelineView />;
 }

@@ -2,8 +2,10 @@ import { HistoricalCard } from "@/components/historical-card";
 import { PageHeading } from "@/components/page-heading";
 import { getPersons } from "@/data/history";
 
-export default function PersonsPage() {
-  const persons = getPersons();
+export const dynamic = "force-dynamic";
+
+export default async function PersonsPage() {
+  const persons = await getPersons();
 
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">

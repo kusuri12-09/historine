@@ -3,6 +3,8 @@ import { TagList } from "@/components/tag-list";
 import { notFound } from "next/navigation";
 import { findEvent } from "@/data/history";
 
+export const dynamic = "force-dynamic";
+
 type EventDetailPageProps = {
   params: Promise<{
     id: string;
@@ -11,7 +13,7 @@ type EventDetailPageProps = {
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {
   const { id } = await params;
-  const event = findEvent(id);
+  const event = await findEvent(id);
 
   if (!event) {
     notFound();

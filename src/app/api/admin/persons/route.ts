@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { addPerson } from "@/data/history";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import type { ApiResponse } from "@/types/api/common";
+import type { CreateEncyclopediaResponse } from "@/types/api/encyclopedia";
 
 export async function POST(request: Request) {
   if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ message: "관리자 인증이 필요합니다." }, { status: 401 });
+    return NextResponse.json<ApiResponse<null>>(
+      { success: false, data: null, error: "관리자 인증이 필요합니다." },
+      { status: 401 }
+    );
   }
 
   const body = (await request.json().catch(() => null)) as
@@ -19,10 +24,13 @@ export async function POST(request: Request) {
     | null;
 
   if (!body?.title || !body?.period || !body?.category || !body?.content || !body?.summary) {
-    return NextResponse.json({ message: "필수 값을 확인해주세요." }, { status: 400 });
+    return NextResponse.json<ApiResponse<null>>(
+      { success: false, data: null, error: "필수 값을 확인해주세요." },
+      { status: 400 }
+    );
   }
 
-  const person = addPerson({
+  const person = await addPerson({
     title: body.title,
     period: body.period,
     category: body.category,
@@ -31,5 +39,8 @@ export async function POST(request: Request) {
     summary: body.summary
   });
 
-  return NextResponse.json({ data: person }, { status: 201 });
+  return NextResponse.json<CreateEncyclopediaResponse>(
+    { success: true, data: person, error: null },
+    { status: 201 }
+  );
 }

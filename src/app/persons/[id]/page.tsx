@@ -3,6 +3,8 @@ import { TagList } from "@/components/tag-list";
 import { notFound } from "next/navigation";
 import { findPerson } from "@/data/history";
 
+export const dynamic = "force-dynamic";
+
 type PersonDetailPageProps = {
   params: Promise<{
     id: string;
@@ -11,7 +13,7 @@ type PersonDetailPageProps = {
 
 export default async function PersonDetailPage({ params }: PersonDetailPageProps) {
   const { id } = await params;
-  const person = findPerson(id);
+  const person = await findPerson(id);
 
   if (!person) {
     notFound();
