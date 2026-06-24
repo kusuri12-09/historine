@@ -36,7 +36,7 @@ export function HeaderNav() {
   async function handleLogout() {
     setLoggingOut(true);
 
-    await fetch("/api/admin/auth/logout", {
+    await fetch("/api/auth/logout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

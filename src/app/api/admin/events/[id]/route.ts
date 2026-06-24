@@ -6,7 +6,7 @@ import {
   withAdminJson
 } from "@/lib/admin-route";
 import { validateEncyclopediaBody } from "@/lib/admin-validators";
-import { deleteEvent, updateEvent } from "@/services/events";
+import { deleteEvent, updateEvent } from "@/repositories/events";
 import type {
   UpdateEncyclopediaRequest
 } from "@/types/api/admin/encyclopedia";

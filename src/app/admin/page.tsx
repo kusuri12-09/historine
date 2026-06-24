@@ -1,7 +1,7 @@
 import { AdminConsole } from "@/components/admin-console";
-import { getEvents } from "@/services/events";
-import { getPersons } from "@/services/persons";
-import { getTimelines } from "@/services/timelines";
+import { getEvents } from "@/repositories/events";
+import { getPersons } from "@/repositories/persons";
+import { getTimelines } from "@/repositories/timelines";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";

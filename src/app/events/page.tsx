@@ -1,6 +1,6 @@
 import { HistoricalCard } from "@/components/historical-card";
 import { PageHeading } from "@/components/page-heading";
-import { getEvents } from "@/services/events";
+import { getEvents } from "@/repositories/events";
 
 export const dynamic = "force-dynamic";
 

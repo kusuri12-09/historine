@@ -93,7 +93,7 @@ export function AdminConsole({
     const formData = new FormData(event.currentTarget);
 
     try {
-      await postJson("/api/admin/auth/login", {
+      await postJson("/api/auth/login", {
         username: formData.get("username"),
         password: formData.get("password")
       });

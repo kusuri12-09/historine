@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { parseId, toNumberId } from "@/services/shared";
+import { parseId, toNumberId } from "@/repositories/shared";
 
 export type TimelineItem = {
   id: number;

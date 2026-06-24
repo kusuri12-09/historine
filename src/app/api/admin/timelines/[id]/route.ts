@@ -6,7 +6,7 @@ import {
   withAdminJson
 } from "@/lib/admin-route";
 import { validateTimelineBody } from "@/lib/admin-validators";
-import { deleteTimeline, updateTimeline } from "@/services/timelines";
+import { deleteTimeline, updateTimeline } from "@/repositories/timelines";
 import type { UpdateTimelineRequest } from "@/types/api/admin/timeline";
 
 export const PUT = withAdminJson<UpdateTimelineRequest, AdminRouteContext>(

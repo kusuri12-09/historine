@@ -3,7 +3,7 @@ import {
   type EncyclopediaItem,
   parseId,
   toEncyclopediaItem
-} from "@/services/shared";
+} from "@/repositories/shared";
 
 export async function getEvents(): Promise<EncyclopediaItem[]> {
   const events = await prisma.event.findMany({
