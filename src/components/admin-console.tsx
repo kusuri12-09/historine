@@ -24,6 +24,7 @@ type EditableResource = "timelines" | "persons" | "events";
 
 type PendingAction =
   | "auth:login"
+  | "cache:revalidate"
   | "timelines:create"
   | "persons:create"
   | "events:create"
@@ -276,6 +277,25 @@ export function AdminConsole({
     }
   }
 
+  async function handleRevalidate() {
+    if (pendingAction) {
+      return;
+    }
+
+    setPendingAction("cache:revalidate");
+    setMessage({ type: "success", text: "캐시 갱신 요청을 처리하고 있습니다." });
+
+    try {
+      await postJson("/api/admin/revalidate", {});
+      setMessage({ type: "success", text: "캐시를 갱신했습니다." });
+      router.refresh();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "캐시 갱신 실패" });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 py-20">
       <div className="mb-12">
@@ -314,6 +334,12 @@ export function AdminConsole({
         </form>
       ) : (
         <div className="space-y-8">
+          <AdminSection title="캐시 관리">
+            <button className={buttonClassName} disabled={pendingAction === "cache:revalidate"} onClick={handleRevalidate} type="button">
+              {pendingAction === "cache:revalidate" ? <LoadingSpinner label="갱신 중" /> : "캐시 갱신"}
+            </button>
+          </AdminSection>
+
           <AdminSection title="연표 추가">
             <form className="grid gap-4 md:grid-cols-2" onSubmit={handleTimelineSubmit}>
               <AdminTextField disabled={pendingAction === "timelines:create"} label="연도" name="year" required type="number" />
