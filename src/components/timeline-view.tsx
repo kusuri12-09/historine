@@ -1,4 +1,6 @@
 import { PageHeading } from "@/components/page-heading";
+import { TimelineCreateModal } from "@/components/timeline-create-modal";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getTimelines } from "@/repositories/timelines";
 
 function timelineTone(type: "KOREA" | "WORLD") {
@@ -16,7 +18,10 @@ function timelineTone(type: "KOREA" | "WORLD") {
 }
 
 export async function TimelineView() {
-  const sortedTimelines = await getTimelines();
+  const [authenticated, sortedTimelines] = await Promise.all([
+    isAdminAuthenticated(),
+    getTimelines()
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">
@@ -25,6 +30,12 @@ export async function TimelineView() {
         eyebrow="CHRONOLOGICAL ARCHIVE"
         title="근대 국가 수립 연표"
       />
+
+      {authenticated ? (
+        <div className="mb-8 flex justify-end">
+          <TimelineCreateModal />
+        </div>
+      ) : null}
 
       {sortedTimelines.length === 0 ? (
         <div className="rounded-lg border border-historine-border bg-historine-panel p-7 text-historine-muted">
