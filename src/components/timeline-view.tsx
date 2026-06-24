@@ -3,7 +3,14 @@ import { PageHeading } from "@/components/page-heading";
 import { TimelineCreateModal } from "@/components/timeline-create-modal";
 import { TimelineItemControls } from "@/components/timeline-item-controls";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { getTimelines } from "@/repositories/timelines";
+import { type TimelineItem, getTimelines } from "@/repositories/timelines";
+
+type TimelineGroup = {
+  key: string;
+  year: number;
+  type: TimelineItem["type"];
+  items: TimelineItem[];
+};
 
 function timelineTone(type: "KOREA" | "WORLD") {
   return type === "KOREA"
@@ -19,11 +26,33 @@ function timelineTone(type: "KOREA" | "WORLD") {
       };
 }
 
+function groupTimelines(items: TimelineItem[]) {
+  return items.reduce<TimelineGroup[]>((groups, item) => {
+    const key = `${item.type}:${item.year}`;
+    const lastGroup = groups.at(-1);
+
+    if (lastGroup?.key === key) {
+      lastGroup.items.push(item);
+      return groups;
+    }
+
+    groups.push({
+      key,
+      year: item.year,
+      type: item.type,
+      items: [item]
+    });
+
+    return groups;
+  }, []);
+}
+
 export async function TimelineView() {
   const [authenticated, sortedTimelines] = await Promise.all([
     isAdminAuthenticated(),
     getTimelines()
   ]);
+  const timelineGroups = groupTimelines(sortedTimelines);
 
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">
@@ -47,33 +76,36 @@ export async function TimelineView() {
         <div className="relative" aria-label="근대 국가 수립 연표">
           <div className="absolute left-[72px] top-[35px] hidden h-[calc(100%-70px)] w-1 -translate-x-1/2 rounded-full bg-historine-main md:block" />
           <div className="relative z-10 space-y-20">
-            {sortedTimelines.map((item) => {
-              const tone = timelineTone(item.type);
+            {timelineGroups.map((group) => {
+              const tone = timelineTone(group.type);
 
               return (
                 <article
-                  className="group relative grid gap-6 md:grid-cols-[144px_1fr] md:gap-14"
-                  id={`timeline-${item.id}`}
-                  key={item.id}
+                  className="relative grid items-start gap-6 md:grid-cols-[144px_1fr] md:gap-14"
+                  key={group.key}
                 >
                   <div className="relative flex md:justify-center">
                     <div className="absolute left-1/2 hidden h-[74px] w-[128px] -translate-x-1/2 rounded-2xl bg-historine-bg md:block" />
                     <div
                       className={`relative z-10 flex h-[70px] w-[124px] items-center justify-center rounded-2xl border ${tone.border} ${tone.bg} ${tone.text} text-[15px] font-extrabold`}
                     >
-                      {item.year}
+                      {group.year}
                     </div>
                   </div>
-                  <div className="pt-1">
-                    {authenticated ? (
-                      <div className="mb-3 flex justify-end">
-                        <TimelineItemControls item={item} />
+                  <div className="space-y-5">
+                    {group.items.map((item) => (
+                      <div className="group scroll-mt-24" id={`timeline-${item.id}`} key={item.id}>
+                        {authenticated ? (
+                          <div className="mb-3 flex justify-end">
+                            <TimelineItemControls item={item} />
+                          </div>
+                        ) : null}
+                        <MarkdownContent
+                          className="max-w-4xl text-[17px] leading-8 text-historine-muted"
+                          content={item.content}
+                        />
                       </div>
-                    ) : null}
-                    <MarkdownContent
-                      className="max-w-4xl text-[17px] leading-8 text-historine-muted"
-                      content={item.content}
-                    />
+                    ))}
                   </div>
                 </article>
               );
