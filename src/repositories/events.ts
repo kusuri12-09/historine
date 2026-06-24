@@ -1,3 +1,5 @@
+import { revalidateTag, unstable_cache } from "next/cache";
+import { HISTORY_CACHE_TAG } from "@/lib/cache-tags";
 import { prisma } from "@/lib/prisma";
 import {
   type EncyclopediaItem,
@@ -5,26 +7,42 @@ import {
   toEncyclopediaItem
 } from "@/repositories/shared";
 
-export async function getEvents(): Promise<EncyclopediaItem[]> {
-  const events = await prisma.event.findMany({
-    orderBy: { id: "asc" }
-  });
+const cachedGetEvents = unstable_cache(
+  async (): Promise<EncyclopediaItem[]> => {
+    const events = await prisma.event.findMany({
+      orderBy: { id: "asc" }
+    });
 
-  return events.map(toEncyclopediaItem);
+    return events.map(toEncyclopediaItem);
+  },
+  ["events"],
+  { tags: [HISTORY_CACHE_TAG] }
+);
+
+const cachedFindEvent = unstable_cache(
+  async (id: string): Promise<EncyclopediaItem | null> => {
+    const parsedId = parseId(id);
+
+    if (!parsedId) {
+      return null;
+    }
+
+    const event = await prisma.event.findUnique({
+      where: { id: parsedId }
+    });
+
+    return event ? toEncyclopediaItem(event) : null;
+  },
+  ["event-detail"],
+  { tags: [HISTORY_CACHE_TAG] }
+);
+
+export async function getEvents(): Promise<EncyclopediaItem[]> {
+  return cachedGetEvents();
 }
 
 export async function findEvent(id: string): Promise<EncyclopediaItem | null> {
-  const parsedId = parseId(id);
-
-  if (!parsedId) {
-    return null;
-  }
-
-  const event = await prisma.event.findUnique({
-    where: { id: parsedId }
-  });
-
-  return event ? toEncyclopediaItem(event) : null;
+  return cachedFindEvent(id);
 }
 
 export async function findEventsByIds(ids: bigint[]): Promise<EncyclopediaItem[]> {
@@ -48,6 +66,8 @@ export async function addEvent(item: Omit<EncyclopediaItem, "id">): Promise<Ency
     data: item
   });
 
+  revalidateTag(HISTORY_CACHE_TAG);
+
   return toEncyclopediaItem(event);
 }
 
@@ -68,6 +88,10 @@ export async function updateEvent(
     })
     .catch(() => null);
 
+  if (event) {
+    revalidateTag(HISTORY_CACHE_TAG);
+  }
+
   return event ? toEncyclopediaItem(event) : null;
 }
 
@@ -83,6 +107,10 @@ export async function deleteEvent(id: string): Promise<EncyclopediaItem | null> 
       where: { id: parsedId }
     })
     .catch(() => null);
+
+  if (event) {
+    revalidateTag(HISTORY_CACHE_TAG);
+  }
 
   return event ? toEncyclopediaItem(event) : null;
 }

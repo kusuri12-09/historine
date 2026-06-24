@@ -1,3 +1,5 @@
+import { revalidateTag, unstable_cache } from "next/cache";
+import { HISTORY_CACHE_TAG } from "@/lib/cache-tags";
 import { prisma } from "@/lib/prisma";
 import {
   type EncyclopediaItem,
@@ -5,26 +7,42 @@ import {
   toEncyclopediaItem
 } from "@/repositories/shared";
 
-export async function getPersons(): Promise<EncyclopediaItem[]> {
-  const persons = await prisma.person.findMany({
-    orderBy: { id: "asc" }
-  });
+const cachedGetPersons = unstable_cache(
+  async (): Promise<EncyclopediaItem[]> => {
+    const persons = await prisma.person.findMany({
+      orderBy: { id: "asc" }
+    });
 
-  return persons.map(toEncyclopediaItem);
+    return persons.map(toEncyclopediaItem);
+  },
+  ["persons"],
+  { tags: [HISTORY_CACHE_TAG] }
+);
+
+const cachedFindPerson = unstable_cache(
+  async (id: string): Promise<EncyclopediaItem | null> => {
+    const parsedId = parseId(id);
+
+    if (!parsedId) {
+      return null;
+    }
+
+    const person = await prisma.person.findUnique({
+      where: { id: parsedId }
+    });
+
+    return person ? toEncyclopediaItem(person) : null;
+  },
+  ["person-detail"],
+  { tags: [HISTORY_CACHE_TAG] }
+);
+
+export async function getPersons(): Promise<EncyclopediaItem[]> {
+  return cachedGetPersons();
 }
 
 export async function findPerson(id: string): Promise<EncyclopediaItem | null> {
-  const parsedId = parseId(id);
-
-  if (!parsedId) {
-    return null;
-  }
-
-  const person = await prisma.person.findUnique({
-    where: { id: parsedId }
-  });
-
-  return person ? toEncyclopediaItem(person) : null;
+  return cachedFindPerson(id);
 }
 
 export async function findPersonsByIds(ids: bigint[]): Promise<EncyclopediaItem[]> {
@@ -48,6 +66,8 @@ export async function addPerson(item: Omit<EncyclopediaItem, "id">): Promise<Enc
     data: item
   });
 
+  revalidateTag(HISTORY_CACHE_TAG);
+
   return toEncyclopediaItem(person);
 }
 
@@ -68,6 +88,10 @@ export async function updatePerson(
     })
     .catch(() => null);
 
+  if (person) {
+    revalidateTag(HISTORY_CACHE_TAG);
+  }
+
   return person ? toEncyclopediaItem(person) : null;
 }
 
@@ -83,6 +107,10 @@ export async function deletePerson(id: string): Promise<EncyclopediaItem | null>
       where: { id: parsedId }
     })
     .catch(() => null);
+
+  if (person) {
+    revalidateTag(HISTORY_CACHE_TAG);
+  }
 
   return person ? toEncyclopediaItem(person) : null;
 }

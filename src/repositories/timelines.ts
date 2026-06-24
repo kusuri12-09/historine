@@ -1,3 +1,5 @@
+import { revalidateTag, unstable_cache } from "next/cache";
+import { HISTORY_CACHE_TAG } from "@/lib/cache-tags";
 import { prisma } from "@/lib/prisma";
 import { parseId, toNumberId } from "@/repositories/shared";
 
@@ -22,12 +24,20 @@ function toTimelineItem(item: {
   };
 }
 
-export async function getTimelines(): Promise<TimelineItem[]> {
-  const timelines = await prisma.timeline.findMany({
-    orderBy: [{ year: "asc" }, { id: "asc" }]
-  });
+const cachedGetTimelines = unstable_cache(
+  async (): Promise<TimelineItem[]> => {
+    const timelines = await prisma.timeline.findMany({
+      orderBy: [{ year: "asc" }, { id: "asc" }]
+    });
 
-  return timelines.map(toTimelineItem);
+    return timelines.map(toTimelineItem);
+  },
+  ["timelines"],
+  { tags: [HISTORY_CACHE_TAG] }
+);
+
+export async function getTimelines(): Promise<TimelineItem[]> {
+  return cachedGetTimelines();
 }
 
 export async function findTimelinesByIds(ids: bigint[]): Promise<TimelineItem[]> {
@@ -51,6 +61,8 @@ export async function addTimeline(item: Omit<TimelineItem, "id">): Promise<Timel
     data: item
   });
 
+  revalidateTag(HISTORY_CACHE_TAG);
+
   return toTimelineItem(timeline);
 }
 
@@ -71,6 +83,10 @@ export async function updateTimeline(
     })
     .catch(() => null);
 
+  if (timeline) {
+    revalidateTag(HISTORY_CACHE_TAG);
+  }
+
   return timeline ? toTimelineItem(timeline) : null;
 }
 
@@ -86,6 +102,10 @@ export async function deleteTimeline(id: string): Promise<TimelineItem | null> {
       where: { id: parsedId }
     })
     .catch(() => null);
+
+  if (timeline) {
+    revalidateTag(HISTORY_CACHE_TAG);
+  }
 
   return timeline ? toTimelineItem(timeline) : null;
 }
