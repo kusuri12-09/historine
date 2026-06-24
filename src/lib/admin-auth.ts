@@ -1,22 +1,24 @@
 import { cookies } from "next/headers";
+import {
+  createAdminSessionId,
+  deleteAdminSessionId,
+  validateAdminSessionId
+} from "@/lib/admin-session-store";
 import { clearCsrfToken, createCsrfToken, setCsrfToken } from "@/lib/csrf";
 
 const COOKIE_NAME = "historine_admin";
 
-function sessionValue() {
-  return process.env.ADMIN_SESSION_SECRET ?? "local-dev-admin-session";
-}
-
 export async function isAdminAuthenticated() {
   const cookieStore = await cookies();
-  return cookieStore.get(COOKIE_NAME)?.value === sessionValue();
+  return validateAdminSessionId(cookieStore.get(COOKIE_NAME)?.value);
 }
 
 export async function createAdminSession() {
   const cookieStore = await cookies();
+  const sessionId = createAdminSessionId();
   const csrfToken = createCsrfToken();
 
-  cookieStore.set(COOKIE_NAME, sessionValue(), {
+  cookieStore.set(COOKIE_NAME, sessionId, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -28,6 +30,7 @@ export async function createAdminSession() {
 
 export async function clearAdminSession() {
   const cookieStore = await cookies();
+  deleteAdminSessionId(cookieStore.get(COOKIE_NAME)?.value);
   cookieStore.delete(COOKIE_NAME);
   await clearCsrfToken();
 }
