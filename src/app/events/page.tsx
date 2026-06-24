@@ -30,7 +30,7 @@ export default async function EventsPage() {
 
       {events.length === 0 ? (
         <div className="rounded-lg border border-historine-border bg-historine-panel p-7 text-historine-muted">
-          사건이 없습니다.
+          준비 중입니다...
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
