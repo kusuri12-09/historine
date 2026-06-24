@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import {
   createAdminSessionId,
@@ -35,9 +36,27 @@ export async function clearAdminSession() {
   await clearCsrfToken();
 }
 
-export function validateAdminCredentials(username: string, password: string) {
-  const adminUsername = process.env.ADMIN_USERNAME ?? "admin";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "change-me";
+function hashPassword(password: string) {
+  return createHash("sha256").update(password).digest("hex");
+}
 
-  return username === adminUsername && password === adminPassword;
+function safeEqual(value: string, expected: string) {
+  const valueBuffer = Buffer.from(value);
+  const expectedBuffer = Buffer.from(expected);
+
+  if (valueBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(valueBuffer, expectedBuffer);
+}
+
+function adminPasswordHash() {
+  return process.env.ADMIN_PASSWORD_HASH ?? hashPassword(process.env.ADMIN_PASSWORD ?? "change-me");
+}
+
+export function validateAdminCredentials(username: string, passwordHash: string) {
+  const adminUsername = process.env.ADMIN_USERNAME ?? "admin";
+
+  return username === adminUsername && safeEqual(passwordHash, adminPasswordHash());
 }

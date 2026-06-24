@@ -22,7 +22,7 @@ const LOGIN_IP_RATE_LIMIT_OPTIONS = {
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as Partial<AdminLoginRequest> | null;
 
-  if (!body?.username || !body?.password) {
+  if (!body?.username || !body?.passwordHash) {
     return NextResponse.json<AdminLoginResponse>(
       { success: false, data: null, error: "로그인 정보를 확인해주세요." },
       { status: 400 }
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!validateAdminCredentials(body.username, body.password)) {
+  if (!validateAdminCredentials(body.username, body.passwordHash)) {
     recordRateLimitAttempt(usernameLimitKey, LOGIN_RATE_LIMIT_OPTIONS);
     recordRateLimitAttempt(ipLimitKey, LOGIN_IP_RATE_LIMIT_OPTIONS);
 

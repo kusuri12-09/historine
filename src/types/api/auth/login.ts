@@ -2,7 +2,7 @@ import type { ApiResponse } from "@/types/api/common";
 
 export type AdminLoginRequest = {
   username: string;
-  password: string;
+  passwordHash: string;
 };
 
 export type AdminLoginData = {

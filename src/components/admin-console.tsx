@@ -48,6 +48,15 @@ function parseTags(value: FormDataEntryValue | null) {
     .filter(Boolean);
 }
 
+async function hashPassword(password: string) {
+  const encodedPassword = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encodedPassword);
+
+  return [...new Uint8Array(hashBuffer)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 async function postJson(url: string, body: unknown) {
   const response = await fetch(url, {
     method: "POST",
@@ -115,9 +124,11 @@ export function AdminConsole({
     setMessage({ type: "success", text: "로그인 요청을 처리하고 있습니다." });
 
     try {
+      const password = String(formData.get("password") ?? "");
+
       await postJson("/api/auth/login", {
         username: formData.get("username"),
-        password: formData.get("password")
+        passwordHash: await hashPassword(password)
       });
       setAuthenticated(true);
       setMessage({ type: "success", text: "관리자로 로그인되었습니다." });
