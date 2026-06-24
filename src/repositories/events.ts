@@ -27,6 +27,22 @@ export async function findEvent(id: string): Promise<EncyclopediaItem | null> {
   return event ? toEncyclopediaItem(event) : null;
 }
 
+export async function findEventsByIds(ids: bigint[]): Promise<EncyclopediaItem[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const events = await prisma.event.findMany({
+    where: {
+      id: {
+        in: ids
+      }
+    }
+  });
+
+  return events.map(toEncyclopediaItem);
+}
+
 export async function addEvent(item: Omit<EncyclopediaItem, "id">): Promise<EncyclopediaItem> {
   const event = await prisma.event.create({
     data: item

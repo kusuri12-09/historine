@@ -1,11 +1,14 @@
 import ReactMarkdown from "react-markdown";
+import { renderMarkdownMentions } from "@/lib/markdown-mentions";
 
 type MarkdownContentProps = {
   content: string;
   className?: string;
 };
 
-export function MarkdownContent({ content, className }: MarkdownContentProps) {
+export async function MarkdownContent({ content, className }: MarkdownContentProps) {
+  const renderedContent = await renderMarkdownMentions(content);
+
   return (
     <div className={className}>
       <ReactMarkdown
@@ -55,7 +58,7 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
           strong: ({ children }) => <strong className="font-extrabold text-historine-text">{children}</strong>
         }}
       >
-        {content}
+        {renderedContent}
       </ReactMarkdown>
     </div>
   );

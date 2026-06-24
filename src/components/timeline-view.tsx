@@ -53,6 +53,7 @@ export async function TimelineView() {
               return (
                 <article
                   className="group relative grid gap-6 md:grid-cols-[144px_1fr] md:gap-14"
+                  id={`timeline-${item.id}`}
                   key={item.id}
                 >
                   <div className="relative flex md:justify-center">

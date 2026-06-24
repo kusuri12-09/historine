@@ -30,6 +30,22 @@ export async function getTimelines(): Promise<TimelineItem[]> {
   return timelines.map(toTimelineItem);
 }
 
+export async function findTimelinesByIds(ids: bigint[]): Promise<TimelineItem[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const timelines = await prisma.timeline.findMany({
+    where: {
+      id: {
+        in: ids
+      }
+    }
+  });
+
+  return timelines.map(toTimelineItem);
+}
+
 export async function addTimeline(item: Omit<TimelineItem, "id">): Promise<TimelineItem> {
   const timeline = await prisma.timeline.create({
     data: item

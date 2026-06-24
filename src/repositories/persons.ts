@@ -27,6 +27,22 @@ export async function findPerson(id: string): Promise<EncyclopediaItem | null> {
   return person ? toEncyclopediaItem(person) : null;
 }
 
+export async function findPersonsByIds(ids: bigint[]): Promise<EncyclopediaItem[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const persons = await prisma.person.findMany({
+    where: {
+      id: {
+        in: ids
+      }
+    }
+  });
+
+  return persons.map(toEncyclopediaItem);
+}
+
 export async function addPerson(item: Omit<EncyclopediaItem, "id">): Promise<EncyclopediaItem> {
   const person = await prisma.person.create({
     data: item
