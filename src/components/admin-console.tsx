@@ -20,6 +20,16 @@ type Message = {
 
 type EditableResource = "timelines" | "persons" | "events";
 
+type PendingAction =
+  | "auth:login"
+  | "timelines:create"
+  | "persons:create"
+  | "events:create"
+  | "item:update"
+  | `timelines:delete:${number}`
+  | `persons:delete:${number}`
+  | `events:delete:${number}`;
+
 type EditingItem =
   | {
       kind: "timelines";
@@ -82,6 +92,7 @@ export function AdminConsole({
   const [authenticated, setAuthenticated] = useState(initialAuthenticated);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -90,7 +101,15 @@ export function AdminConsole({
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (pendingAction) {
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
+
+    setPendingAction("auth:login");
+    setMessage({ type: "success", text: "로그인 요청을 처리하고 있습니다." });
 
     try {
       await postJson("/api/auth/login", {
@@ -103,13 +122,23 @@ export function AdminConsole({
       router.refresh();
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "로그인 실패" });
+    } finally {
+      setPendingAction(null);
     }
   }
 
   async function handleTimelineSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (pendingAction) {
+      return;
+    }
+
     const form = event.currentTarget;
     const formData = new FormData(form);
+
+    setPendingAction("timelines:create");
+    setMessage({ type: "success", text: "연표 추가 요청을 처리하고 있습니다." });
 
     try {
       await postJson("/api/admin/timelines", {
@@ -122,13 +151,26 @@ export function AdminConsole({
       router.refresh();
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "연표 추가 실패" });
+    } finally {
+      setPendingAction(null);
     }
   }
 
   async function handleEncyclopediaSubmit(event: FormEvent<HTMLFormElement>, kind: "persons" | "events") {
     event.preventDefault();
+
+    if (pendingAction) {
+      return;
+    }
+
     const form = event.currentTarget;
     const formData = new FormData(form);
+
+    setPendingAction(`${kind}:create`);
+    setMessage({
+      type: "success",
+      text: `${kind === "persons" ? "인물" : "사건"} 백과 추가 요청을 처리하고 있습니다.`
+    });
 
     try {
       await postJson(`/api/admin/${kind}`, {
@@ -150,17 +192,22 @@ export function AdminConsole({
         type: "error",
         text: error instanceof Error ? error.message : "백과 카드 추가 실패"
       });
+    } finally {
+      setPendingAction(null);
     }
   }
 
   async function handleEditSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!editingItem) {
+    if (!editingItem || pendingAction) {
       return;
     }
 
     const formData = new FormData(event.currentTarget);
+
+    setPendingAction("item:update");
+    setMessage({ type: "success", text: "수정 요청을 처리하고 있습니다." });
 
     try {
       if (editingItem.kind === "timelines") {
@@ -189,10 +236,19 @@ export function AdminConsole({
       router.refresh();
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "수정 실패" });
+    } finally {
+      setPendingAction(null);
     }
   }
 
   async function handleDelete(kind: EditableResource, id: number) {
+    if (pendingAction) {
+      return;
+    }
+
+    setPendingAction(`${kind}:delete:${id}`);
+    setMessage({ type: "success", text: "삭제 요청을 처리하고 있습니다." });
+
     try {
       await requestJson(`/api/admin/${kind}/${id}`, "DELETE");
       setEditingItem((current) => (current?.kind === kind && current.item.id === id ? null : current));
@@ -200,6 +256,8 @@ export function AdminConsole({
       router.refresh();
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "삭제 실패" });
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -233,21 +291,22 @@ export function AdminConsole({
           className="grid max-w-[460px] gap-5 rounded-lg border border-historine-border bg-historine-panel p-7"
           onSubmit={handleLogin}
         >
-          <AdminTextField label="아이디" name="username" required />
-          <AdminTextField label="비밀번호" name="password" required type="password" />
-          <button className={buttonClassName} type="submit">
-            로그인
+          <AdminTextField disabled={pendingAction === "auth:login"} label="아이디" name="username" required />
+          <AdminTextField disabled={pendingAction === "auth:login"} label="비밀번호" name="password" required type="password" />
+          <button className={buttonClassName} disabled={pendingAction === "auth:login"} type="submit">
+            {pendingAction === "auth:login" ? "로그인 중" : "로그인"}
           </button>
         </form>
       ) : (
         <div className="space-y-8">
           <AdminSection title="연표 추가">
             <form className="grid gap-4 md:grid-cols-2" onSubmit={handleTimelineSubmit}>
-              <AdminTextField label="연도" name="year" required type="number" />
+              <AdminTextField disabled={pendingAction === "timelines:create"} label="연도" name="year" required type="number" />
               <label className="grid gap-2 text-sm font-bold text-historine-muted">
                 타입
                 <select
                   className="h-14 rounded border border-historine-border bg-[#151515] px-4 text-historine-text outline-none focus:border-historine-main"
+                  disabled={pendingAction === "timelines:create"}
                   name="type"
                   required
                 >
@@ -256,31 +315,47 @@ export function AdminConsole({
                 </select>
               </label>
               <div className="md:col-span-2">
-                <AdminTextField label="내용" multiline name="content" required rows={4} />
+                <AdminTextField disabled={pendingAction === "timelines:create"} label="내용" multiline name="content" required rows={4} />
               </div>
-              <button className={buttonClassName} type="submit">
-                연표 추가
+              <button className={buttonClassName} disabled={pendingAction === "timelines:create"} type="submit">
+                {pendingAction === "timelines:create" ? "추가 중" : "연표 추가"}
               </button>
             </form>
           </AdminSection>
 
           <AdminSection title="인물 백과 카드 추가">
-            <EncyclopediaForm buttonLabel="인물 추가" onSubmit={(event) => handleEncyclopediaSubmit(event, "persons")} />
+            <EncyclopediaForm
+              buttonLabel="인물 추가"
+              disabled={pendingAction === "persons:create"}
+              pendingLabel="추가 중"
+              onSubmit={(event) => handleEncyclopediaSubmit(event, "persons")}
+            />
           </AdminSection>
 
           <AdminSection title="사건 백과 카드 추가">
-            <EncyclopediaForm buttonLabel="사건 추가" onSubmit={(event) => handleEncyclopediaSubmit(event, "events")} />
+            <EncyclopediaForm
+              buttonLabel="사건 추가"
+              disabled={pendingAction === "events:create"}
+              pendingLabel="추가 중"
+              onSubmit={(event) => handleEncyclopediaSubmit(event, "events")}
+            />
           </AdminSection>
 
           {editingItem ? (
             <AdminSection title="선택 항목 수정">
-              <EditForm editingItem={editingItem} onCancel={() => setEditingItem(null)} onSubmit={handleEditSubmit} />
+              <EditForm
+                disabled={pendingAction === "item:update"}
+                editingItem={editingItem}
+                onCancel={() => setEditingItem(null)}
+                onSubmit={handleEditSubmit}
+              />
             </AdminSection>
           ) : null}
 
           <AdminSection title="연표 관리">
             <TimelineAdminList
               items={initialTimelines}
+              pendingAction={pendingAction}
               onDelete={(id) => handleDelete("timelines", id)}
               onEdit={(item) => setEditingItem({ kind: "timelines", item })}
             />
@@ -289,6 +364,8 @@ export function AdminConsole({
           <AdminSection title="인물 백과 관리">
             <EncyclopediaAdminList
               items={initialPersons}
+              kind="persons"
+              pendingAction={pendingAction}
               onDelete={(id) => handleDelete("persons", id)}
               onEdit={(item) => setEditingItem({ kind: "persons", item })}
             />
@@ -297,6 +374,8 @@ export function AdminConsole({
           <AdminSection title="사건 백과 관리">
             <EncyclopediaAdminList
               items={initialEvents}
+              kind="events"
+              pendingAction={pendingAction}
               onDelete={(id) => handleDelete("events", id)}
               onEdit={(item) => setEditingItem({ kind: "events", item })}
             />
@@ -318,35 +397,41 @@ function AdminSection({ children, title }: { children: React.ReactNode; title: s
 
 function EncyclopediaForm({
   buttonLabel,
+  disabled,
+  pendingLabel,
   onSubmit
 }: {
   buttonLabel: string;
+  disabled: boolean;
+  pendingLabel: string;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
     <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
-      <AdminTextField label="제목" name="title" required />
-      <AdminTextField label="기간" name="period" required />
-      <AdminTextField label="분류" name="category" required />
-      <AdminTextField label="태그" name="tags" placeholder="쉼표로 구분" />
+      <AdminTextField disabled={disabled} label="제목" name="title" required />
+      <AdminTextField disabled={disabled} label="기간" name="period" required />
+      <AdminTextField disabled={disabled} label="분류" name="category" required />
+      <AdminTextField disabled={disabled} label="태그" name="tags" placeholder="쉼표로 구분" />
       <div className="md:col-span-2">
-        <AdminTextField label="한줄 소개" name="summary" required />
+        <AdminTextField disabled={disabled} label="한줄 소개" name="summary" required />
       </div>
       <div className="md:col-span-2">
-        <AdminTextField label="상세 내용" multiline name="content" required rows={4} />
+        <AdminTextField disabled={disabled} label="상세 내용" multiline name="content" required rows={4} />
       </div>
-      <button className={buttonClassName} type="submit">
-        {buttonLabel}
+      <button className={buttonClassName} disabled={disabled} type="submit">
+        {disabled ? pendingLabel : buttonLabel}
       </button>
     </form>
   );
 }
 
 function EditForm({
+  disabled,
   editingItem,
   onCancel,
   onSubmit
 }: {
+  disabled: boolean;
   editingItem: EditingItem;
   onCancel: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -354,12 +439,13 @@ function EditForm({
   if (editingItem.kind === "timelines") {
     return (
       <form className="grid gap-4 md:grid-cols-2" key={`timeline-${editingItem.item.id}`} onSubmit={onSubmit}>
-        <AdminTextField defaultValue={String(editingItem.item.year)} label="연도" name="year" required type="number" />
+        <AdminTextField disabled={disabled} defaultValue={String(editingItem.item.year)} label="연도" name="year" required type="number" />
         <label className="grid gap-2 text-sm font-bold text-historine-muted">
           타입
           <select
             className="h-14 rounded border border-historine-border bg-[#151515] px-4 text-historine-text outline-none focus:border-historine-main"
             defaultValue={editingItem.item.type}
+            disabled={disabled}
             name="type"
             required
           >
@@ -368,37 +454,45 @@ function EditForm({
           </select>
         </label>
         <div className="md:col-span-2">
-          <AdminTextField defaultValue={editingItem.item.content} label="내용" multiline name="content" required rows={4} />
+          <AdminTextField disabled={disabled} defaultValue={editingItem.item.content} label="내용" multiline name="content" required rows={4} />
         </div>
-        <FormActions onCancel={onCancel} submitLabel="연표 수정" />
+        <FormActions disabled={disabled} onCancel={onCancel} submitLabel={disabled ? "수정 중" : "연표 수정"} />
       </form>
     );
   }
 
   return (
     <form className="grid gap-4 md:grid-cols-2" key={`${editingItem.kind}-${editingItem.item.id}`} onSubmit={onSubmit}>
-      <AdminTextField defaultValue={editingItem.item.title} label="제목" name="title" required />
-      <AdminTextField defaultValue={editingItem.item.period} label="기간" name="period" required />
-      <AdminTextField defaultValue={editingItem.item.category} label="분류" name="category" required />
-      <AdminTextField defaultValue={editingItem.item.tags.join(", ")} label="태그" name="tags" placeholder="쉼표로 구분" />
+      <AdminTextField disabled={disabled} defaultValue={editingItem.item.title} label="제목" name="title" required />
+      <AdminTextField disabled={disabled} defaultValue={editingItem.item.period} label="기간" name="period" required />
+      <AdminTextField disabled={disabled} defaultValue={editingItem.item.category} label="분류" name="category" required />
+      <AdminTextField disabled={disabled} defaultValue={editingItem.item.tags.join(", ")} label="태그" name="tags" placeholder="쉼표로 구분" />
       <div className="md:col-span-2">
-        <AdminTextField defaultValue={editingItem.item.summary} label="한줄 소개" name="summary" required />
+        <AdminTextField disabled={disabled} defaultValue={editingItem.item.summary} label="한줄 소개" name="summary" required />
       </div>
       <div className="md:col-span-2">
-        <AdminTextField defaultValue={editingItem.item.content} label="상세 내용" multiline name="content" required rows={4} />
+        <AdminTextField disabled={disabled} defaultValue={editingItem.item.content} label="상세 내용" multiline name="content" required rows={4} />
       </div>
-      <FormActions onCancel={onCancel} submitLabel="백과 수정" />
+      <FormActions disabled={disabled} onCancel={onCancel} submitLabel={disabled ? "수정 중" : "백과 수정"} />
     </form>
   );
 }
 
-function FormActions({ onCancel, submitLabel }: { onCancel: () => void; submitLabel: string }) {
+function FormActions({
+  disabled,
+  onCancel,
+  submitLabel
+}: {
+  disabled: boolean;
+  onCancel: () => void;
+  submitLabel: string;
+}) {
   return (
     <div className="flex gap-3">
-      <button className={buttonClassName} type="submit">
+      <button className={buttonClassName} disabled={disabled} type="submit">
         {submitLabel}
       </button>
-      <button className={outlineButtonClassName} onClick={onCancel} type="button">
+      <button className={outlineButtonClassName} disabled={disabled} onClick={onCancel} type="button">
         취소
       </button>
     </div>
@@ -407,10 +501,12 @@ function FormActions({ onCancel, submitLabel }: { onCancel: () => void; submitLa
 
 function TimelineAdminList({
   items,
+  pendingAction,
   onDelete,
   onEdit
 }: {
   items: TimelineResponseData[];
+  pendingAction: PendingAction | null;
   onDelete: (id: number) => void;
   onEdit: (item: TimelineResponseData) => void;
 }) {
@@ -426,7 +522,12 @@ function TimelineAdminList({
             <div className="font-extrabold text-historine-main">
               {item.year} · {item.type}
             </div>
-            <AdminItemActions onDelete={() => onDelete(item.id)} onEdit={() => onEdit(item)} />
+            <AdminItemActions
+              deleteDisabled={pendingAction === `timelines:delete:${item.id}`}
+              deleteLabel={pendingAction === `timelines:delete:${item.id}` ? "삭제 중" : "삭제"}
+              onDelete={() => onDelete(item.id)}
+              onEdit={() => onEdit(item)}
+            />
           </div>
           <p className="text-[15px] leading-7 text-historine-muted">{item.content}</p>
         </div>
@@ -437,10 +538,14 @@ function TimelineAdminList({
 
 function EncyclopediaAdminList({
   items,
+  kind,
+  pendingAction,
   onDelete,
   onEdit
 }: {
   items: EncyclopediaResponseData[];
+  kind: "persons" | "events";
+  pendingAction: PendingAction | null;
   onDelete: (id: number) => void;
   onEdit: (item: EncyclopediaResponseData) => void;
 }) {
@@ -459,7 +564,12 @@ function EncyclopediaAdminList({
                 {item.period} · {item.category}
               </div>
             </div>
-            <AdminItemActions onDelete={() => onDelete(item.id)} onEdit={() => onEdit(item)} />
+            <AdminItemActions
+              deleteDisabled={pendingAction === `${kind}:delete:${item.id}`}
+              deleteLabel={pendingAction === `${kind}:delete:${item.id}` ? "삭제 중" : "삭제"}
+              onDelete={() => onDelete(item.id)}
+              onEdit={() => onEdit(item)}
+            />
           </div>
           <p className="text-[15px] leading-7 text-historine-muted">{item.summary}</p>
         </div>
@@ -468,14 +578,24 @@ function EncyclopediaAdminList({
   );
 }
 
-function AdminItemActions({ onDelete, onEdit }: { onDelete: () => void; onEdit: () => void }) {
+function AdminItemActions({
+  deleteDisabled = false,
+  deleteLabel = "삭제",
+  onDelete,
+  onEdit
+}: {
+  deleteDisabled?: boolean;
+  deleteLabel?: string;
+  onDelete: () => void;
+  onEdit: () => void;
+}) {
   return (
     <div className="flex gap-2">
       <button className={smallOutlineButtonClassName} onClick={onEdit} type="button">
         수정
       </button>
-      <button className={dangerButtonClassName} onClick={onDelete} type="button">
-        삭제
+      <button className={dangerButtonClassName} disabled={deleteDisabled} onClick={onDelete} type="button">
+        {deleteLabel}
       </button>
     </div>
   );
@@ -483,6 +603,7 @@ function AdminItemActions({ onDelete, onEdit }: { onDelete: () => void; onEdit: 
 
 type AdminTextFieldProps = {
   defaultValue?: string;
+  disabled?: boolean;
   label: string;
   multiline?: boolean;
   name: string;
@@ -494,6 +615,7 @@ type AdminTextFieldProps = {
 
 function AdminTextField({
   defaultValue,
+  disabled = false,
   label,
   multiline = false,
   name,
@@ -512,6 +634,7 @@ function AdminTextField({
         <textarea
           className={`${fieldClassName} min-h-28 resize-y`}
           defaultValue={defaultValue}
+          disabled={disabled}
           name={name}
           placeholder={placeholder}
           required={required}
@@ -521,6 +644,7 @@ function AdminTextField({
         <input
           className={`${fieldClassName} h-14`}
           defaultValue={defaultValue}
+          disabled={disabled}
           name={name}
           placeholder={placeholder}
           required={required}
@@ -532,13 +656,13 @@ function AdminTextField({
 }
 
 const buttonClassName =
-  "h-12 rounded bg-historine-main px-5 text-[15px] font-extrabold text-historine-bg transition hover:bg-[#8BAFDA]";
+  "h-12 rounded bg-historine-main px-5 text-[15px] font-extrabold text-historine-bg transition hover:bg-[#8BAFDA] disabled:cursor-not-allowed disabled:opacity-60";
 
 const outlineButtonClassName =
-  "h-12 rounded border border-historine-main px-5 text-[15px] font-extrabold text-historine-main transition hover:bg-historine-main/10";
+  "h-12 rounded border border-historine-main px-5 text-[15px] font-extrabold text-historine-main transition hover:bg-historine-main/10 disabled:cursor-not-allowed disabled:opacity-60";
 
 const smallOutlineButtonClassName =
   "rounded border border-historine-main px-3 py-2 text-sm font-extrabold text-historine-main transition hover:bg-historine-main/10";
 
 const dangerButtonClassName =
-  "rounded border border-red-400/60 px-3 py-2 text-sm font-extrabold text-red-300 transition hover:bg-red-400/10";
+  "rounded border border-red-400/60 px-3 py-2 text-sm font-extrabold text-red-300 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60";
