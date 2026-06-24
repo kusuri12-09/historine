@@ -1,5 +1,6 @@
 import { PageHeading } from "@/components/page-heading";
 import { TimelineCreateModal } from "@/components/timeline-create-modal";
+import { TimelineItemControls } from "@/components/timeline-item-controls";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getTimelines } from "@/repositories/timelines";
 
@@ -50,7 +51,7 @@ export async function TimelineView() {
 
               return (
                 <article
-                  className="relative grid gap-6 md:grid-cols-[144px_1fr] md:gap-14"
+                  className="group relative grid gap-6 md:grid-cols-[144px_1fr] md:gap-14"
                   key={item.id}
                 >
                   <div className="relative flex md:justify-center">
@@ -62,6 +63,11 @@ export async function TimelineView() {
                     </div>
                   </div>
                   <div className="pt-1">
+                    {authenticated ? (
+                      <div className="mb-3 flex justify-end">
+                        <TimelineItemControls item={item} />
+                      </div>
+                    ) : null}
                     <p className="max-w-4xl text-[17px] leading-8 text-historine-muted">
                       {item.content}
                     </p>
