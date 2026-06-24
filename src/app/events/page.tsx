@@ -1,11 +1,16 @@
+import { EncyclopediaCreateModal } from "@/components/encyclopedia-create-modal";
 import { HistoricalCard } from "@/components/historical-card";
 import { PageHeading } from "@/components/page-heading";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getEvents } from "@/repositories/events";
 
 export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
-  const events = await getEvents();
+  const [authenticated, events] = await Promise.all([
+    isAdminAuthenticated(),
+    getEvents()
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">
@@ -15,9 +20,12 @@ export default async function EventsPage() {
         title="사건백과"
       />
 
-      <div className="mb-10 flex items-center justify-between text-[15px] font-semibold text-historine-muted">
+      <div className="mb-10 flex flex-wrap items-center justify-between gap-4 text-[15px] font-semibold text-historine-muted">
         <span>1-{events.length} / 총 {events.length}건</span>
-        <span>1 / 1 페이지</span>
+        <div className="flex items-center gap-4">
+          <span>1 / 1 페이지</span>
+          {authenticated ? <EncyclopediaCreateModal kind="events" /> : null}
+        </div>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
