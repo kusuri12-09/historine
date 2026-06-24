@@ -1,5 +1,6 @@
 import { BackButton } from "@/components/back-button";
 import { EncyclopediaDetailControls } from "@/components/encyclopedia-detail-controls";
+import { MarkdownContent } from "@/components/markdown-content";
 import { TagList } from "@/components/tag-list";
 import { notFound } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
@@ -59,9 +60,10 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           <h2 className="mb-5 border-l-4 border-historine-side pl-3 text-[20px] font-extrabold">
             상세 설명
           </h2>
-          <div className="rounded-lg border border-historine-border bg-historine-panel p-8 text-[18px] font-semibold leading-9 text-historine-text">
-            {event.content}
-          </div>
+          <MarkdownContent
+            className="rounded-lg border border-historine-border bg-historine-panel p-8 text-[18px] font-semibold leading-9 text-historine-text"
+            content={event.content}
+          />
         </section>
         <aside className="space-y-5">
           <div className="rounded-lg border border-historine-border bg-historine-panel p-6">

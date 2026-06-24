@@ -1,3 +1,4 @@
+import { MarkdownContent } from "@/components/markdown-content";
 import { PageHeading } from "@/components/page-heading";
 import { TimelineCreateModal } from "@/components/timeline-create-modal";
 import { TimelineItemControls } from "@/components/timeline-item-controls";
@@ -68,9 +69,10 @@ export async function TimelineView() {
                         <TimelineItemControls item={item} />
                       </div>
                     ) : null}
-                    <p className="max-w-4xl text-[17px] leading-8 text-historine-muted">
-                      {item.content}
-                    </p>
+                    <MarkdownContent
+                      className="max-w-4xl text-[17px] leading-8 text-historine-muted"
+                      content={item.content}
+                    />
                   </div>
                 </article>
               );
