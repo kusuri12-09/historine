@@ -10,7 +10,14 @@ export async function MarkdownContent({ content, className }: MarkdownContentPro
   const renderedContent = await renderMarkdownMentions(content);
 
   return (
-    <div className={className}>
+    <div
+      className={[
+        "[&>h1:first-child]:!mt-0 [&>h2:first-child]:!mt-0 [&>h3:first-child]:!mt-0 [&>p:first-child]:!mt-0",
+        className
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <ReactMarkdown
         components={{
           h1: ({ children }) => (

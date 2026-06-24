@@ -94,9 +94,9 @@ export async function TimelineView() {
                   </div>
                   <div className="space-y-5">
                     {group.items.map((item) => (
-                      <div className="group scroll-mt-24" id={`timeline-${item.id}`} key={item.id}>
+                      <div className="group relative scroll-mt-24" id={`timeline-${item.id}`} key={item.id}>
                         {authenticated ? (
-                          <div className="mb-3 flex justify-end">
+                          <div className="absolute right-0 top-0 z-10">
                             <TimelineItemControls item={item} />
                           </div>
                         ) : null}
