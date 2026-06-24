@@ -34,7 +34,6 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.0.0",
-    "neonctl": "^2.27.0",
     "typescript": "^5.0.0"
   }
 }

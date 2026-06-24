@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminSession, validateAdminCredentials } from "@/lib/admin-auth";
-import type { AdminLoginRequest, AdminLoginResponse } from "@/types/api/auth-login";
+import type { AdminLoginRequest, AdminLoginResponse } from "@/types/api/auth/login";
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as Partial<AdminLoginRequest> | null;
