@@ -20,9 +20,11 @@ npm install
 DATABASE_URL="postgresql://user:password@localhost:5432/historine"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD_HASH="e2186dbdb1bb4193608605e84f33208765b5693b55edd4f730a719a100eeea6f"
+ADMIN_SESSION_SECRET="replace-with-random-session-secret"
 ```
 
 `ADMIN_PASSWORD_HASH`는 관리자 비밀번호의 SHA-256 해시값이다.
+`ADMIN_SESSION_SECRET`은 관리자 로그인 세션 쿠키 서명에 사용하는 임의 문자열이다.
 
 PowerShell에서 다음 명령으로 생성할 수 있다.
 
