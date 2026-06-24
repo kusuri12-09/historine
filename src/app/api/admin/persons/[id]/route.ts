@@ -1,81 +1,37 @@
-import { NextResponse } from "next/server";
-import { deletePerson, updatePerson } from "@/data/history";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
-import type { ApiResponse } from "@/types/api/common";
+import {
+  type AdminRouteContext,
+  errorResponse,
+  successResponse,
+  withAdminAuth,
+  withAdminJson
+} from "@/lib/admin-route";
+import { validateEncyclopediaBody } from "@/lib/admin-validators";
+import { deletePerson, updatePerson } from "@/services/persons";
 import type {
-  DeleteEncyclopediaResponse,
-  UpdateEncyclopediaRequest,
-  UpdateEncyclopediaResponse
+  UpdateEncyclopediaRequest
 } from "@/types/api/admin/encyclopedia";
 
-type RouteContext = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+export const PUT = withAdminJson<UpdateEncyclopediaRequest, AdminRouteContext>(
+  validateEncyclopediaBody,
+  async (body, _request, context) => {
+    const { id } = await context.params;
+    const person = await updatePerson(id, body);
 
-export async function PUT(request: Request, context: RouteContext) {
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json<ApiResponse<null>>(
-      { success: false, data: null, error: "관리자 인증이 필요합니다." },
-      { status: 401 }
-    );
+    if (!person) {
+      return errorResponse("인물을 찾을 수 없습니다.", 404);
+    }
+
+    return successResponse(person);
   }
+);
 
-  const body = (await request.json().catch(() => null)) as Partial<UpdateEncyclopediaRequest> | null;
-
-  if (!body?.title || !body?.period || !body?.category || !body?.content || !body?.summary) {
-    return NextResponse.json<ApiResponse<null>>(
-      { success: false, data: null, error: "필수 값을 확인해주세요." },
-      { status: 400 }
-    );
-  }
-
-  const { id } = await context.params;
-  const person = await updatePerson(id, {
-    title: body.title,
-    period: body.period,
-    category: body.category,
-    tags: body.tags ?? [],
-    content: body.content,
-    summary: body.summary
-  });
-
-  if (!person) {
-    return NextResponse.json<ApiResponse<null>>(
-      { success: false, data: null, error: "인물을 찾을 수 없습니다." },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json<UpdateEncyclopediaResponse>({
-    success: true,
-    data: person,
-    error: null
-  });
-}
-
-export async function DELETE(_request: Request, context: RouteContext) {
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json<ApiResponse<null>>(
-      { success: false, data: null, error: "관리자 인증이 필요합니다." },
-      { status: 401 }
-    );
-  }
-
+export const DELETE = withAdminAuth<AdminRouteContext>(async (_request, context) => {
   const { id } = await context.params;
   const person = await deletePerson(id);
 
   if (!person) {
-    return NextResponse.json<ApiResponse<null>>(
-      { success: false, data: null, error: "인물을 찾을 수 없습니다." },
-      { status: 404 }
-    );
+    return errorResponse("인물을 찾을 수 없습니다.", 404);
   }
 
-  return NextResponse.json<DeleteEncyclopediaResponse>({
-    success: true,
-    data: person,
-    error: null
-  });
-}
+  return successResponse(person);
+});

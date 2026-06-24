@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/back-button";
 import { TagList } from "@/components/tag-list";
 import { notFound } from "next/navigation";
-import { findEvent } from "@/data/history";
+import { findEvent } from "@/services/events";
 
 export const dynamic = "force-dynamic";
 

@@ -1,46 +1,8 @@
-import { NextResponse } from "next/server";
-import { addPerson } from "@/data/history";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
-import type { ApiResponse } from "@/types/api/common";
-import type { CreateEncyclopediaResponse } from "@/types/api/encyclopedia";
+import { successResponse, withAdminJson } from "@/lib/admin-route";
+import { validateEncyclopediaBody } from "@/lib/admin-validators";
+import { addPerson } from "@/services/persons";
 
-export async function POST(request: Request) {
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json<ApiResponse<null>>(
-      { success: false, data: null, error: "관리자 인증이 필요합니다." },
-      { status: 401 }
-    );
-  }
-
-  const body = (await request.json().catch(() => null)) as
-    | {
-        title?: string;
-        period?: string;
-        category?: string;
-        tags?: string[];
-        content?: string;
-        summary?: string;
-      }
-    | null;
-
-  if (!body?.title || !body?.period || !body?.category || !body?.content || !body?.summary) {
-    return NextResponse.json<ApiResponse<null>>(
-      { success: false, data: null, error: "필수 값을 확인해주세요." },
-      { status: 400 }
-    );
-  }
-
-  const person = await addPerson({
-    title: body.title,
-    period: body.period,
-    category: body.category,
-    tags: body.tags ?? [],
-    content: body.content,
-    summary: body.summary
-  });
-
-  return NextResponse.json<CreateEncyclopediaResponse>(
-    { success: true, data: person, error: null },
-    { status: 201 }
-  );
-}
+export const POST = withAdminJson(validateEncyclopediaBody, async (body) => {
+  const person = await addPerson(body);
+  return successResponse(person, 201);
+});

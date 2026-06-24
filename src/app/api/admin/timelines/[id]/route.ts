@@ -1,84 +1,35 @@
-import { NextResponse } from "next/server";
-import { deleteTimeline, updateTimeline } from "@/data/history";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
-import type {
-  DeleteTimelineResponse,
-  UpdateTimelineRequest,
-  UpdateTimelineResponse
-} from "@/types/api/admin/timeline";
+import {
+  type AdminRouteContext,
+  errorResponse,
+  successResponse,
+  withAdminAuth,
+  withAdminJson
+} from "@/lib/admin-route";
+import { validateTimelineBody } from "@/lib/admin-validators";
+import { deleteTimeline, updateTimeline } from "@/services/timelines";
+import type { UpdateTimelineRequest } from "@/types/api/admin/timeline";
 
-type RouteContext = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+export const PUT = withAdminJson<UpdateTimelineRequest, AdminRouteContext>(
+  validateTimelineBody,
+  async (body, _request, context) => {
+    const { id } = await context.params;
+    const timeline = await updateTimeline(id, body);
 
-export async function PUT(request: Request, context: RouteContext) {
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json<UpdateTimelineResponse>(
-      { success: false, data: null, error: "관리자 인증이 필요합니다." },
-      { status: 401 }
-    );
+    if (!timeline) {
+      return errorResponse("연표를 찾을 수 없습니다.", 404);
+    }
+
+    return successResponse(timeline);
   }
+);
 
-  const body = (await request.json().catch(() => null)) as Partial<UpdateTimelineRequest> | null;
-
-  if (!body?.year || !body?.type || !body?.content) {
-    return NextResponse.json<UpdateTimelineResponse>(
-      { success: false, data: null, error: "필수 값을 확인해주세요." },
-      { status: 400 }
-    );
-  }
-
-  if (!["KOREA", "WORLD"].includes(body.type)) {
-    return NextResponse.json<UpdateTimelineResponse>(
-      { success: false, data: null, error: "연표 타입을 확인해주세요." },
-      { status: 400 }
-    );
-  }
-
-  const { id } = await context.params;
-  const timeline = await updateTimeline(id, {
-    year: Number(body.year),
-    type: body.type,
-    content: body.content
-  });
-
-  if (!timeline) {
-    return NextResponse.json<UpdateTimelineResponse>(
-      { success: false, data: null, error: "연표를 찾을 수 없습니다." },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json<UpdateTimelineResponse>({
-    success: true,
-    data: timeline,
-    error: null
-  });
-}
-
-export async function DELETE(_request: Request, context: RouteContext) {
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json<DeleteTimelineResponse>(
-      { success: false, data: null, error: "관리자 인증이 필요합니다." },
-      { status: 401 }
-    );
-  }
-
+export const DELETE = withAdminAuth<AdminRouteContext>(async (_request, context) => {
   const { id } = await context.params;
   const timeline = await deleteTimeline(id);
 
   if (!timeline) {
-    return NextResponse.json<DeleteTimelineResponse>(
-      { success: false, data: null, error: "연표를 찾을 수 없습니다." },
-      { status: 404 }
-    );
+    return errorResponse("연표를 찾을 수 없습니다.", 404);
   }
 
-  return NextResponse.json<DeleteTimelineResponse>({
-    success: true,
-    data: timeline,
-    error: null
-  });
-}
+  return successResponse(timeline);
+});

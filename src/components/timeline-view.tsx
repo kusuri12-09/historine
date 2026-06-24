@@ -1,5 +1,5 @@
 import { PageHeading } from "@/components/page-heading";
-import { getTimelines } from "@/data/history";
+import { getTimelines } from "@/services/timelines";
 
 function timelineTone(type: "KOREA" | "WORLD") {
   return type === "KOREA"
