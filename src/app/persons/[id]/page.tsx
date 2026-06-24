@@ -1,6 +1,8 @@
 import { BackButton } from "@/components/back-button";
+import { EncyclopediaDetailControls } from "@/components/encyclopedia-detail-controls";
 import { TagList } from "@/components/tag-list";
 import { notFound } from "next/navigation";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { findPerson } from "@/repositories/persons";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +15,10 @@ type PersonDetailPageProps = {
 
 export default async function PersonDetailPage({ params }: PersonDetailPageProps) {
   const { id } = await params;
-  const person = await findPerson(id);
+  const [authenticated, person] = await Promise.all([
+    isAdminAuthenticated(),
+    findPerson(id)
+  ]);
 
   if (!person) {
     notFound();
@@ -28,20 +33,23 @@ export default async function PersonDetailPage({ params }: PersonDetailPageProps
       </div>
 
       <article className="rounded-lg border border-historine-border border-t-4 border-t-historine-side bg-historine-panel p-8 md:p-12">
-        <div className="flex flex-col gap-8 md:flex-row md:items-center">
+        <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
           <div className="flex h-[100px] w-[100px] shrink-0 items-center justify-center rounded-3xl border border-historine-side/35 bg-historine-side/10 text-[32px] font-extrabold text-historine-side">
             {person.title[0]}
           </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-4">
-              <h1 className="text-[42px] font-extrabold leading-tight text-historine-text">
-                {person.title}
-              </h1>
-              <span className="rounded border border-historine-side/35 bg-historine-side/10 px-3 py-1 text-sm font-extrabold text-historine-side">
-                {person.category}
-              </span>
+          <div className="flex flex-1 flex-col gap-5 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="flex flex-wrap items-center gap-4">
+                <h1 className="text-[42px] font-extrabold leading-tight text-historine-text">
+                  {person.title}
+                </h1>
+                <span className="rounded border border-historine-side/35 bg-historine-side/10 px-3 py-1 text-sm font-extrabold text-historine-side">
+                  {person.category}
+                </span>
+              </div>
+              <div className="mt-2 text-[18px] font-semibold text-historine-muted">{person.period}</div>
             </div>
-            <div className="mt-2 text-[18px] font-semibold text-historine-muted">{person.period}</div>
+            {authenticated ? <EncyclopediaDetailControls item={person} kind="persons" /> : null}
           </div>
         </div>
       </article>
