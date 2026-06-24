@@ -97,23 +97,3 @@ npm run start
 | [데이터 모델링](./document/modeling.md) | 연표, 인물, 사건 데이터 모델 |
 | [기능 명세](./document/feat-spec) | 기능별 상세 명세 |
 | [요구사항](./document/requirement) | 기능별 요구사항 |
-
-## 기능 명세
-
-| 기능 | 문서 |
-| --- | --- |
-| 관리자 로그인 | [FS-01-admin-login.md](./document/feat-spec/FS-01-admin-login.md) |
-| Timeline 렌더링 | [FS-02-timeline-rendering.md](./document/feat-spec/FS-02-timeline-rendering.md) |
-| Person 렌더링 | [FS-03-person-rendering.md](./document/feat-spec/FS-03-person-rendering.md) |
-| Event 렌더링 | [FS-04-event-rendering.md](./document/feat-spec/FS-04-event-rendering.md) |
-
-## 요구사항
-
-| 요구사항 | 문서 |
-| --- | --- |
-| 마크다운 지원 | [RQ-01-markdown.md](./document/requirement/RQ-01-markdown.md) |
-| 마크다운 멘션 | [RQ-02-reference-page.md](./document/requirement/RQ-02-reference-page.md) |
-| Auth | [RQ-03-auth.md](./document/requirement/RQ-03-auth.md) |
-| Timeline 렌더링 | [RQ-04-timeline-rendering.md](./document/requirement/RQ-04-timeline-rendering.md) |
-| Person 렌더링 | [RQ-05-person-rendering.md](./document/requirement/RQ-05-person-rendering.md) |
-| Event 렌더링 | [RQ-06-event-rendering.md](./document/requirement/RQ-06-event-rendering.md) |

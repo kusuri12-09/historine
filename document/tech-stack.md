@@ -9,11 +9,9 @@
 | Backend            | Next.js Route Handler       | 별도 서버 없이 REST API 구현 가능, 개발 및 배포 복잡도 감소     |
 | Database           | PostgreSQL                  | 관계형 데이터 관리에 적합, Full Text Search 지원, 높은 안정성 |
 | ORM                | Prisma                      | Type-safe ORM, 마이그레이션 지원, 자동 타입 생성          |
-| Authentication     | Auth.js                     | Next.js 생태계와 높은 호환성, 세션 및 OAuth 인증 지원       |
-| Markdown           | react-markdown              | React 환경에서 마크다운 렌더링 지원                      |
-| Markdown Parser    | remark                      | 마크다운 파싱 및 AST 생성                            |
-| Markdown Extension | remark 플러그인                 | 멘션(`@(type:id)`) 등 서비스 전용 문법 확장 지원          |
-| HTML Processing    | rehype                      | HTML 변환 및 후처리 지원                            |
+| Authentication     | 자체 쿠키 세션                  | 관리자 전용 단순 인증, 랜덤 세션 ID 회전, CSRF 토큰 검증, 로그인 rate limit 적용 |
+| Markdown           | react-markdown              | React 환경에서 마크다운 렌더링 지원, 기본 HTML 이스케이프 처리 |
+| Markdown Extension | 자체 멘션 전처리                 | 멘션(`@(type:id)`)을 데이터 조회 후 내부 링크 마크다운으로 변환 |
 | Search             | PostgreSQL Full Text Search | 별도 검색 엔진 없이 전문 검색 기능 제공                     |
 | Hosting            | Vercel                      | Next.js 공식 배포 플랫폼, GitHub 연동 자동 배포          |
 | Database Hosting   | Neon                        | Serverless PostgreSQL, Vercel과 높은 호환성       |
@@ -24,15 +22,23 @@
 ```text
 Client
     ↓
-Next.js
- ├─ UI
+Next.js App Router
+ ├─ Pages / Layout
+ ├─ Client Components
  │  ├─ Tailwind CSS
  │  ├─ Material UI
  │  └─ Radix UI
- ├─ Route Handler
- ├─ Auth.js
- ├─ Markdown Renderer
- └─ Mention Extension
+ ├─ Server Components
+ │  ├─ Markdown Renderer (react-markdown)
+ │  └─ Mention Preprocessor (@(type:id))
+ ├─ Route Handlers
+ │  ├─ Admin CRUD API
+ │  └─ Auth API
+ ├─ Security
+ │  ├─ Cookie Session
+ │  ├─ CSRF Token
+ │  └─ Login Rate Limit
+ └─ Repositories
     ↓
 Prisma
     ↓
