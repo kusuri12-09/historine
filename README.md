@@ -19,8 +19,18 @@ npm install
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/historine"
 ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="change-me"
-ADMIN_SESSION_SECRET="change-this-secret"
+ADMIN_PASSWORD_HASH="e2186dbdb1bb4193608605e84f33208765b5693b55edd4f730a719a100eeea6f"
+```
+
+`ADMIN_PASSWORD_HASH`는 관리자 비밀번호의 SHA-256 해시값이다.
+
+PowerShell에서 다음 명령으로 생성할 수 있다.
+
+```powershell
+$password = "change-me"
+$sha = [System.Security.Cryptography.SHA256]::Create()
+$bytes = [System.Text.Encoding]::UTF8.GetBytes($password)
+($sha.ComputeHash($bytes) | ForEach-Object { $_.ToString("x2") }) -join ""
 ```
 
 ### 3. 개발 서버 실행
@@ -56,11 +66,47 @@ http://localhost:3000/admin
 
 등록 데이터는 `DATABASE_URL`에 연결된 PostgreSQL 데이터베이스에 저장된다.
 
-### 5. 프로덕션 빌드
+### 5. 데이터베이스 마이그레이션
+
+```bash
+npm run prisma:migrate
+```
+
+Prisma Client가 필요할 경우 다음 명령을 실행한다.
+
+```bash
+npm run prisma:generate
+```
+
+### 6. 프로덕션 빌드
 
 ```bash
 npm run build
 npm run start
+```
+
+## Vercel 배포 설정
+
+Vercel에서는 Framework Preset을 `Next.js`로 설정한다.
+
+| 항목 | 값 |
+| --- | --- |
+| Framework Preset | `Next.js` |
+| Build Command | `npm run build` |
+| Output Directory | 비워둠 |
+| Install Command | 기본값 또는 `npm install` |
+| Root Directory | 프로젝트 루트 |
+
+이 프로젝트는 Route Handler, 쿠키 인증, Prisma DB 접근을 사용하므로 static export가 아니다.
+
+따라서 Output Directory에 `out`을 입력하지 않는다. Framework Preset이 `Next.js`이면 Vercel이 `.next` 빌드 결과를 자동으로 처리한다.
+
+Vercel Environment Variables에는 최소 다음 값을 등록한다.
+
+```env
+DATABASE_URL="postgresql://..."
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD_HASH="..."
 ```
 
 ## 주요 기능
