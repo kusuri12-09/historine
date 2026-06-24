@@ -85,30 +85,6 @@ npm run build
 npm run start
 ```
 
-## Vercel 배포 설정
-
-Vercel에서는 Framework Preset을 `Next.js`로 설정한다.
-
-| 항목 | 값 |
-| --- | --- |
-| Framework Preset | `Next.js` |
-| Build Command | `npm run build` |
-| Output Directory | 비워둠 |
-| Install Command | 기본값 또는 `npm install` |
-| Root Directory | 프로젝트 루트 |
-
-이 프로젝트는 Route Handler, 쿠키 인증, Prisma DB 접근을 사용하므로 static export가 아니다.
-
-따라서 Output Directory에 `out`을 입력하지 않는다. Framework Preset이 `Next.js`이면 Vercel이 `.next` 빌드 결과를 자동으로 처리한다.
-
-Vercel Environment Variables에는 최소 다음 값을 등록한다.
-
-```env
-DATABASE_URL="postgresql://..."
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD_HASH="..."
-```
-
 ## 주요 기능
 
 ### 연표
