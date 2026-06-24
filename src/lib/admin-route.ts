@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { validateCsrfToken } from "@/lib/csrf";
 import type { ApiResponse } from "@/types/api/common";
 
 export type AdminRouteContext = {
@@ -58,6 +59,10 @@ export function withAdminAuth<TContext>(handler: BasicRouteHandler | RouteHandle
   return async function adminRoute(request: Request, context?: TContext) {
     if (!(await isAdminAuthenticated())) {
       return errorResponse("관리자 인증이 필요합니다.", 401);
+    }
+
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method) && !(await validateCsrfToken(request))) {
+      return errorResponse("요청 검증에 실패했습니다.", 403);
     }
 
     return (handler as RouteHandler<TContext>)(request, context as TContext);

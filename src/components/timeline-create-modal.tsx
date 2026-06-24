@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 
 type Message = {
@@ -13,7 +14,8 @@ async function postJson(url: string, body: unknown) {
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      ...csrfHeader()
     },
     body: JSON.stringify(body)
   });

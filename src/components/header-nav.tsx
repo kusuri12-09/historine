@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { csrfHeader } from "@/lib/client-csrf";
 import type { AdminStatusResponse } from "@/types/api/admin/status";
 
 const navItems = [
@@ -39,7 +40,8 @@ export function HeaderNav() {
     await fetch("/api/auth/logout", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...csrfHeader()
       },
       body: "{}"
     });

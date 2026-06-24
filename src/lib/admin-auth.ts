@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { clearCsrfToken, createCsrfToken, setCsrfToken } from "@/lib/csrf";
 
 const COOKIE_NAME = "historine_admin";
 
@@ -13,6 +14,8 @@ export async function isAdminAuthenticated() {
 
 export async function createAdminSession() {
   const cookieStore = await cookies();
+  const csrfToken = createCsrfToken();
+
   cookieStore.set(COOKIE_NAME, sessionValue(), {
     httpOnly: true,
     sameSite: "lax",
@@ -20,11 +23,13 @@ export async function createAdminSession() {
     path: "/",
     maxAge: 60 * 60 * 6
   });
+  await setCsrfToken(csrfToken);
 }
 
 export async function clearAdminSession() {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
+  await clearCsrfToken();
 }
 
 export function validateAdminCredentials(username: string, password: string) {

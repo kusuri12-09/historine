@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 import type { TimelineResponseData } from "@/types/api/timeline";
 
@@ -14,7 +15,8 @@ async function requestJson(url: string, method: "PUT" | "DELETE", body?: unknown
   const response = await fetch(url, {
     method,
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      ...csrfHeader()
     },
     body: body ? JSON.stringify(body) : undefined
   });
