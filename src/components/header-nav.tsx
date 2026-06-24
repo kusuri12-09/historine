@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { AdminStatusResponse } from "@/types/api/admin/status";
 
@@ -87,7 +88,7 @@ export function HeaderNav() {
           onClick={handleLogout}
           type="button"
         >
-          {loggingOut ? "로그아웃 중" : "로그아웃"}
+          {loggingOut ? <LoadingSpinner label="로그아웃 중" /> : "로그아웃"}
         </button>
       ) : null}
     </nav>

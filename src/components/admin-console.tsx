@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 import type { EncyclopediaResponseData } from "@/types/api/encyclopedia";
@@ -308,7 +309,7 @@ export function AdminConsole({
           <AdminTextField disabled={pendingAction === "auth:login"} label="아이디" name="username" required />
           <AdminTextField disabled={pendingAction === "auth:login"} label="비밀번호" name="password" required type="password" />
           <button className={buttonClassName} disabled={pendingAction === "auth:login"} type="submit">
-            {pendingAction === "auth:login" ? "로그인 중" : "로그인"}
+            {pendingAction === "auth:login" ? <LoadingSpinner label="로그인 중" /> : "로그인"}
           </button>
         </form>
       ) : (
@@ -332,7 +333,7 @@ export function AdminConsole({
                 <AdminTextField disabled={pendingAction === "timelines:create"} label="내용" multiline name="content" required rows={4} />
               </div>
               <button className={buttonClassName} disabled={pendingAction === "timelines:create"} type="submit">
-                {pendingAction === "timelines:create" ? "추가 중" : "연표 추가"}
+                {pendingAction === "timelines:create" ? <LoadingSpinner label="추가 중" /> : "연표 추가"}
               </button>
             </form>
           </AdminSection>
@@ -433,7 +434,7 @@ function EncyclopediaForm({
         <AdminTextField disabled={disabled} label="상세 내용" multiline name="content" required rows={4} />
       </div>
       <button className={buttonClassName} disabled={disabled} type="submit">
-        {disabled ? pendingLabel : buttonLabel}
+        {disabled ? <LoadingSpinner label={pendingLabel} /> : buttonLabel}
       </button>
     </form>
   );
@@ -470,7 +471,7 @@ function EditForm({
         <div className="md:col-span-2">
           <AdminTextField disabled={disabled} defaultValue={editingItem.item.content} label="내용" multiline name="content" required rows={4} />
         </div>
-        <FormActions disabled={disabled} onCancel={onCancel} submitLabel={disabled ? "수정 중" : "연표 수정"} />
+        <FormActions disabled={disabled} onCancel={onCancel} pendingLabel="수정 중" submitLabel="연표 수정" />
       </form>
     );
   }
@@ -487,7 +488,7 @@ function EditForm({
       <div className="md:col-span-2">
         <AdminTextField disabled={disabled} defaultValue={editingItem.item.content} label="상세 내용" multiline name="content" required rows={4} />
       </div>
-      <FormActions disabled={disabled} onCancel={onCancel} submitLabel={disabled ? "수정 중" : "백과 수정"} />
+      <FormActions disabled={disabled} onCancel={onCancel} pendingLabel="수정 중" submitLabel="백과 수정" />
     </form>
   );
 }
@@ -495,16 +496,18 @@ function EditForm({
 function FormActions({
   disabled,
   onCancel,
+  pendingLabel,
   submitLabel
 }: {
   disabled: boolean;
   onCancel: () => void;
+  pendingLabel: string;
   submitLabel: string;
 }) {
   return (
     <div className="flex gap-3">
       <button className={buttonClassName} disabled={disabled} type="submit">
-        {submitLabel}
+        {disabled ? <LoadingSpinner label={pendingLabel} /> : submitLabel}
       </button>
       <button className={outlineButtonClassName} disabled={disabled} onClick={onCancel} type="button">
         취소
@@ -538,7 +541,7 @@ function TimelineAdminList({
             </div>
             <AdminItemActions
               deleteDisabled={pendingAction === `timelines:delete:${item.id}`}
-              deleteLabel={pendingAction === `timelines:delete:${item.id}` ? "삭제 중" : "삭제"}
+              deleteLabel={pendingAction === `timelines:delete:${item.id}` ? <LoadingSpinner label="삭제 중" /> : "삭제"}
               onDelete={() => onDelete(item.id)}
               onEdit={() => onEdit(item)}
             />
@@ -580,7 +583,7 @@ function EncyclopediaAdminList({
             </div>
             <AdminItemActions
               deleteDisabled={pendingAction === `${kind}:delete:${item.id}`}
-              deleteLabel={pendingAction === `${kind}:delete:${item.id}` ? "삭제 중" : "삭제"}
+              deleteLabel={pendingAction === `${kind}:delete:${item.id}` ? <LoadingSpinner label="삭제 중" /> : "삭제"}
               onDelete={() => onDelete(item.id)}
               onEdit={() => onEdit(item)}
             />
@@ -599,7 +602,7 @@ function AdminItemActions({
   onEdit
 }: {
   deleteDisabled?: boolean;
-  deleteLabel?: string;
+  deleteLabel?: React.ReactNode;
   onDelete: () => void;
   onEdit: () => void;
 }) {

@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 import type { TimelineResponseData } from "@/types/api/timeline";
@@ -98,7 +99,7 @@ export function TimelineItemControls({ item }: { item: TimelineResponseData }) {
           onClick={handleDelete}
           type="button"
         >
-          {pending === "delete" ? "삭제 중" : "삭제"}
+          {pending === "delete" ? <LoadingSpinner label="삭제 중" /> : "삭제"}
         </button>
       </div>
 
@@ -194,7 +195,7 @@ export function TimelineItemControls({ item }: { item: TimelineResponseData }) {
                 disabled={pending === "update"}
                 type="submit"
               >
-                {pending === "update" ? "수정 중" : "연표 수정"}
+                {pending === "update" ? <LoadingSpinner label="수정 중" /> : "연표 수정"}
               </button>
             </form>
           </div>

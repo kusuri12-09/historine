@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 import type { EncyclopediaResponseData } from "@/types/api/encyclopedia";
@@ -117,7 +118,7 @@ export function EncyclopediaDetailControls({ item, kind }: EncyclopediaDetailCon
           onClick={handleDelete}
           type="button"
         >
-          {pending === "delete" ? "삭제 중" : "삭제"}
+          {pending === "delete" ? <LoadingSpinner label="삭제 중" /> : "삭제"}
         </button>
       </div>
 
@@ -204,7 +205,7 @@ export function EncyclopediaDetailControls({ item, kind }: EncyclopediaDetailCon
                 disabled={pending === "update"}
                 type="submit"
               >
-                {pending === "update" ? "수정 중" : "백과 수정"}
+                {pending === "update" ? <LoadingSpinner label="수정 중" /> : "백과 수정"}
               </button>
             </form>
           </div>

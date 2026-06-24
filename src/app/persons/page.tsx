@@ -28,20 +28,26 @@ export default async function PersonsPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {persons.map((person) => (
-          <HistoricalCard
-            category={person.category}
-            content={person.summary}
-            href={`/persons/${person.id}`}
-            key={person.id}
-            period={person.period}
-            tags={person.tags}
-            title={person.title}
-            tone="main"
-          />
-        ))}
-      </div>
+      {persons.length === 0 ? (
+        <div className="rounded-lg border border-historine-border bg-historine-panel p-7 text-historine-muted">
+          인물이 없습니다.
+        </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {persons.map((person) => (
+            <HistoricalCard
+              category={person.category}
+              content={person.summary}
+              href={`/persons/${person.id}`}
+              key={person.id}
+              period={person.period}
+              tags={person.tags}
+              title={person.title}
+              tone="main"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

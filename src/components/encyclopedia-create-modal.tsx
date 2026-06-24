@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 
@@ -146,7 +147,7 @@ export function EncyclopediaCreateModal({ kind }: EncyclopediaCreateModalProps) 
                 disabled={submitting}
                 type="submit"
               >
-                {submitting ? "추가 중" : `${label} 추가`}
+                {submitting ? <LoadingSpinner label="추가 중" /> : `${label} 추가`}
               </button>
             </form>
           </div>
