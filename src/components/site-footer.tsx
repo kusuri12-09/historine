@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="text-sm font-bold tracking-[0.18em] text-historine-muted">HISTORINE</div>
         <IconButton
           aria-label="GitHub"
-          href="https://github.com"
+          href="https://github.com/kusuri12-09/historine"
           rel="noreferrer"
           sx={{
             color: "#9CA3AF",
