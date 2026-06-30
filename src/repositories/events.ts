@@ -16,7 +16,7 @@ const cachedGetEvents = unstable_cache(
     return events.map(toEncyclopediaItem);
   },
   ["events"],
-  { tags: [HISTORY_CACHE_TAG] }
+  { tags: [HISTORY_CACHE_TAG], revalidate: 60 * 5 }
 );
 
 const cachedFindEvent = unstable_cache(
@@ -34,7 +34,7 @@ const cachedFindEvent = unstable_cache(
     return event ? toEncyclopediaItem(event) : null;
   },
   ["event-detail"],
-  { tags: [HISTORY_CACHE_TAG] }
+  { tags: [HISTORY_CACHE_TAG], revalidate: 60 * 5 }
 );
 
 export async function getEvents(): Promise<EncyclopediaItem[]> {

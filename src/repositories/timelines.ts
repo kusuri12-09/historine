@@ -33,7 +33,7 @@ const cachedGetTimelines = unstable_cache(
     return timelines.map(toTimelineItem);
   },
   ["timelines"],
-  { tags: [HISTORY_CACHE_TAG] }
+  { tags: [HISTORY_CACHE_TAG], revalidate: 60 * 5 }
 );
 
 export async function getTimelines(): Promise<TimelineItem[]> {

@@ -16,7 +16,7 @@ const cachedGetPersons = unstable_cache(
     return persons.map(toEncyclopediaItem);
   },
   ["persons"],
-  { tags: [HISTORY_CACHE_TAG] }
+  { tags: [HISTORY_CACHE_TAG], revalidate: 60 * 5 }
 );
 
 const cachedFindPerson = unstable_cache(
@@ -34,7 +34,7 @@ const cachedFindPerson = unstable_cache(
     return person ? toEncyclopediaItem(person) : null;
   },
   ["person-detail"],
-  { tags: [HISTORY_CACHE_TAG] }
+  { tags: [HISTORY_CACHE_TAG], revalidate: 60 * 5 }
 );
 
 export async function getPersons(): Promise<EncyclopediaItem[]> {
