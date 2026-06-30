@@ -1,5 +1,4 @@
-import { EncyclopediaCreateModal } from "@/components/encyclopedia-create-modal";
-import { HistoricalCard } from "@/components/historical-card";
+import { EncyclopediaList } from "@/components/encyclopedia-list";
 import { PageHeading } from "@/components/page-heading";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPersons } from "@/repositories/persons";
@@ -20,34 +19,13 @@ export default async function PersonsPage() {
         title="인물백과"
       />
 
-      <div className="mb-10 flex flex-wrap items-center justify-between gap-4 text-[15px] font-semibold text-historine-muted">
-        <span>1-{persons.length} / 총 {persons.length}건</span>
-        <div className="flex items-center gap-4">
-          <span>1 / 1 페이지</span>
-          {authenticated ? <EncyclopediaCreateModal kind="persons" /> : null}
-        </div>
-      </div>
-
-      {persons.length === 0 ? (
-        <div className="rounded-lg border border-historine-border bg-historine-panel p-7 text-historine-muted">
-          준비 중입니다...
-        </div>
-      ) : (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {persons.map((person) => (
-            <HistoricalCard
-              category={person.category}
-              content={person.summary}
-              href={`/persons/${person.id}`}
-              key={person.id}
-              period={person.period}
-              tags={person.tags}
-              title={person.title}
-              tone="main"
-            />
-          ))}
-        </div>
-      )}
+      <EncyclopediaList
+        authenticated={authenticated}
+        emptyMessage="인물이 없습니다."
+        items={persons}
+        kind="persons"
+        tone="main"
+      />
     </div>
   );
 }

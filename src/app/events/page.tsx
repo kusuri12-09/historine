@@ -1,5 +1,4 @@
-import { EncyclopediaCreateModal } from "@/components/encyclopedia-create-modal";
-import { HistoricalCard } from "@/components/historical-card";
+import { EncyclopediaList } from "@/components/encyclopedia-list";
 import { PageHeading } from "@/components/page-heading";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getEvents } from "@/repositories/events";
@@ -20,34 +19,13 @@ export default async function EventsPage() {
         title="사건백과"
       />
 
-      <div className="mb-10 flex flex-wrap items-center justify-between gap-4 text-[15px] font-semibold text-historine-muted">
-        <span>1-{events.length} / 총 {events.length}건</span>
-        <div className="flex items-center gap-4">
-          <span>1 / 1 페이지</span>
-          {authenticated ? <EncyclopediaCreateModal kind="events" /> : null}
-        </div>
-      </div>
-
-      {events.length === 0 ? (
-        <div className="rounded-lg border border-historine-border bg-historine-panel p-7 text-historine-muted">
-          준비 중입니다...
-        </div>
-      ) : (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {events.map((event) => (
-            <HistoricalCard
-              category={event.category}
-              content={event.summary}
-              href={`/events/${event.id}`}
-              key={event.id}
-              period={event.period}
-              tags={event.tags}
-              title={event.title}
-              tone="side"
-            />
-          ))}
-        </div>
-      )}
+      <EncyclopediaList
+        authenticated={authenticated}
+        emptyMessage="사건이 없습니다."
+        items={events}
+        kind="events"
+        tone="side"
+      />
     </div>
   );
 }
