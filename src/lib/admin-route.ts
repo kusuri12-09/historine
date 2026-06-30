@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { isAdminApiEnabled } from "@/lib/admin-config";
 import { validateCsrfToken } from "@/lib/csrf";
 import type { ApiResponse } from "@/types/api/common";
 
@@ -57,6 +58,10 @@ export function withAdminAuth<TContext>(
 ): (request: Request, context: TContext) => Promise<Response>;
 export function withAdminAuth<TContext>(handler: BasicRouteHandler | RouteHandler<TContext>) {
   return async function adminRoute(request: Request, context?: TContext) {
+    if (!isAdminApiEnabled()) {
+      return errorResponse("관리자 API가 비활성화되어 있습니다.", 404);
+    }
+
     if (!(await isAdminAuthenticated())) {
       return errorResponse("관리자 인증이 필요합니다.", 401);
     }

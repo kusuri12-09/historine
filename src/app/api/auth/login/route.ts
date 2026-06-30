@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminSession, validateAdminCredentials } from "@/lib/admin-auth";
+import { isAdminApiEnabled } from "@/lib/admin-config";
 import {
   clearRateLimit,
   getClientIp,
@@ -20,6 +21,13 @@ const LOGIN_IP_RATE_LIMIT_OPTIONS = {
 };
 
 export async function POST(request: Request) {
+  if (!isAdminApiEnabled()) {
+    return NextResponse.json<AdminLoginResponse>(
+      { success: false, data: null, error: "관리자 API가 비활성화되어 있습니다." },
+      { status: 404 }
+    );
+  }
+
   const body = (await request.json().catch(() => null)) as Partial<AdminLoginRequest> | null;
 
   if (!body?.username || !body?.passwordHash) {

@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { isAdminApiEnabled } from "@/lib/admin-config";
 import { clearCsrfToken, createCsrfToken, setCsrfToken } from "@/lib/csrf";
 
 const COOKIE_NAME = "historine_admin";
@@ -11,12 +12,20 @@ type AdminSessionPayload = {
 };
 
 export async function isAdminAuthenticated() {
+  if (!isAdminApiEnabled()) {
+    return false;
+  }
+
   const cookieStore = await cookies();
 
   return validateSessionToken(cookieStore.get(COOKIE_NAME)?.value);
 }
 
 export async function createAdminSession() {
+  if (!isAdminApiEnabled()) {
+    return;
+  }
+
   const cookieStore = await cookies();
   const csrfToken = createCsrfToken();
 
@@ -107,6 +116,10 @@ function validateSessionToken(token: string | undefined) {
 }
 
 export function validateAdminCredentials(username: string, passwordHash: string) {
+  if (!isAdminApiEnabled()) {
+    return false;
+  }
+
   const adminUsername = process.env.ADMIN_USERNAME ?? "admin";
 
   return username === adminUsername && safeEqual(passwordHash, adminPasswordHash());

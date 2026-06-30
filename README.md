@@ -1,6 +1,6 @@
 # HISTORINE
 
-HISTORINE은 대한민국 근대 국가 수립기, 1800년대 후반부터 1900년대 극초반까지의 역사 흐름을 다루는 웹 서비스입니다.
+it HISTORINE은 대한민국 근대 국가 수립기, 1800년대 후반부터 1900년대 극초반까지의 역사 흐름을 다루는 웹 서비스입니다.
 
 연표, 인물, 사건 데이터를 웹 사이트로 제공하여 사용자가 시기별 흐름에 따라 근대사의 주요 변화를 이해할 수 있도록 도와줍니다.
 
@@ -21,10 +21,12 @@ DATABASE_URL="postgresql://user:password@localhost:5432/historine"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD_HASH="e2186dbdb1bb4193608605e84f33208765b5693b55edd4f730a719a100eeea6f"
 ADMIN_SESSION_SECRET="replace-with-random-session-secret"
+ADMIN_API_ENABLED="true"
 ```
 
 `ADMIN_PASSWORD_HASH`는 관리자 비밀번호의 SHA-256 해시값,
 `ADMIN_SESSION_SECRET`은 관리자 로그인 세션 쿠키 서명에 사용하는 임의 문자열입니다.
+`ADMIN_API_ENABLED=false`로 설정하면 관리자 페이지와 관리자 API가 비활성화됩니다.
 
 PowerShell에서 다음 명령으로 바로 생성할 수 있습니다.
 
@@ -81,6 +83,12 @@ npm run prisma:generate
 ```
 
 ### 6. 프로덕션 빌드
+
+운영 환경에서 관리자 기능을 완전히 닫으려면 배포 환경 변수에 다음 값을 설정합니다.
+
+```env
+ADMIN_API_ENABLED="false"
+```
 
 ```bash
 npm run build
