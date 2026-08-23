@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "HISTORINE",
-  description: "대한민국 근대 국가 수립기의 연표, 인물, 사건 백과 서비스"
+  description: "대한민국 근현대사 연표 및 백과 서비스"
 };
 
 export default function RootLayout({

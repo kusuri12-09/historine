@@ -59,9 +59,9 @@ export async function TimelineView() {
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">
       <PageHeading
-        description="1800년대 후반부터 1900년대 극초반까지의 주요 흐름을 시간 순서로 확인합니다."
+        description="대한민국 근현대사(1900년~)의 주요 흐름을 시간 순서로 확인합니다."
         eyebrow="CHRONOLOGICAL ARCHIVE"
-        title="근대 국가 수립 연표"
+        title="대한민국 근현대사 연표"
       />
 
       {authenticated ? (
@@ -75,7 +75,7 @@ export async function TimelineView() {
           등록된 연표가 없습니다.
         </div>
       ) : (
-        <div className="relative" aria-label="근대 국가 수립 연표">
+        <div className="relative" aria-label="대한민국 근현대사 연표">
           <div className="absolute left-[72px] top-[35px] hidden h-[calc(100%-70px)] w-1 -translate-x-1/2 rounded-full bg-historine-main md:block" />
           <div className="relative z-10 space-y-20">
             {timelineGroups.map((group) => {

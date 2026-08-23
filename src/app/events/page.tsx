@@ -14,7 +14,7 @@ export default async function EventsPage() {
   return (
     <div className="mx-auto w-full max-w-[1220px] px-5 pb-24">
       <PageHeading
-        description="근대사의 주요 사건을 배경, 전개, 의미와 함께 개별 문서로 살펴봅니다."
+        description="근현대사의 주요 사건을 배경, 전개, 의미와 함께 개별 문서로 살펴봅니다."
         eyebrow="HISTORICAL EVENTS"
         title="사건백과"
       />
