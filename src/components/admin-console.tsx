@@ -2,7 +2,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import { DeleteConfirmModal } from "@/components/delete-confirm-modal";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 import type { EncyclopediaResponseData } from "@/types/api/encyclopedia";
@@ -78,7 +80,7 @@ async function postJson(url: string, body: unknown) {
   return payload;
 }
 
-async function requestJson(url: string, method: "PUT" | "DELETE", body?: unknown) {
+async function requestJson(url: string, method: "PUT" | "PATCH" | "DELETE", body?: unknown) {
   const response = await fetch(url, {
     method,
     headers: {
@@ -106,7 +108,14 @@ export function AdminConsole({
   const [authenticated, setAuthenticated] = useState(initialAuthenticated);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [bulkMode, setBulkMode] = useState<{ kind: EditableResource; operation: "delete" | "hide" } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Record<EditableResource, number[]>>({
+    timelines: [],
+    persons: [],
+    events: []
+  });
+  const [deleteTarget, setDeleteTarget] = useState<{ kind: EditableResource; ids: number[] } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -277,6 +286,86 @@ export function AdminConsole({
     }
   }
 
+  async function handleBulkDelete(kind: EditableResource, ids: number[]) {
+    if (pendingAction || ids.length === 0) return;
+    setPendingAction(`bulk:${kind}:delete`);
+    try {
+      await Promise.all(ids.map((id) => requestJson(`/api/admin/${kind}/${id}`, "DELETE")));
+      setMessage({ type: "success", text: `${ids.length}개 항목을 삭제했습니다.` });
+      setDeleteTarget(null);
+      setBulkMode(null);
+      setSelectedIds((current) => ({ ...current, [kind]: [] }));
+      router.refresh();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "일괄 삭제 실패" });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleSetStatus(kind: EditableResource, id: number, status: "active" | "hidden") {
+    if (pendingAction) return;
+    setPendingAction(`${kind}:status:${id}`);
+    try {
+      await requestJson(`/api/admin/${kind}/${id}`, "PATCH", { status });
+      setMessage({ type: "success", text: status === "hidden" ? "숨김 처리했습니다." : "표시 처리했습니다." });
+      router.refresh();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "상태 변경 실패" });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleBulkHide(kind: EditableResource, ids: number[]) {
+    if (pendingAction || ids.length === 0) return;
+    setPendingAction(`bulk:${kind}:hide`);
+    try {
+      await Promise.all(ids.map((id) => requestJson(`/api/admin/${kind}/${id}`, "PATCH", { status: "hidden" })));
+      setMessage({ type: "success", text: `${ids.length}개 항목을 숨겼습니다.` });
+      setBulkMode(null);
+      setSelectedIds((current) => ({ ...current, [kind]: [] }));
+      router.refresh();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "일괄 숨기기 실패" });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function toggleSelected(kind: EditableResource, id: number) {
+    setSelectedIds((current) => {
+      const ids = current[kind];
+      return { ...current, [kind]: ids.includes(id) ? ids.filter((selectedId) => selectedId !== id) : [...ids, id] };
+    });
+  }
+
+  function toggleAllSelected(kind: EditableResource, ids: number[]) {
+    setSelectedIds((current) => {
+      const isAllSelected = ids.length > 0 && ids.every((id) => current[kind].includes(id));
+      return { ...current, [kind]: isAllSelected ? [] : ids };
+    });
+  }
+
+  function startBulk(kind: EditableResource, operation: "delete" | "hide") {
+    setBulkMode({ kind, operation });
+    setSelectedIds((current) => ({ ...current, [kind]: [] }));
+  }
+
+  function cancelBulk() {
+    if (!bulkMode) return;
+    setSelectedIds((current) => ({ ...current, [bulkMode.kind]: [] }));
+    setBulkMode(null);
+  }
+
+  function requestDelete(kind: EditableResource, ids: number[]) {
+    if (ids.length > 0 && !pendingAction) setDeleteTarget({ kind, ids });
+  }
+
+  function resourceLabel(kind: EditableResource) {
+    return kind === "timelines" ? "연표" : kind === "persons" ? "인물" : "사건";
+  }
+
   async function handleRevalidate() {
     if (pendingAction) {
       return;
@@ -393,44 +482,130 @@ export function AdminConsole({
             </AdminSection>
           ) : null}
 
-          <AdminSection title="연표 관리">
+          <AdminSection
+            actions={
+              <BulkSectionActions
+                activeOperation={bulkMode?.kind === "timelines" ? bulkMode.operation : null}
+                hasSelection={selectedIds.timelines.length > 0}
+                selectableIds={initialTimelines.filter((item) => item.status !== "deleted").map((item) => item.id)}
+                selectedIds={selectedIds.timelines}
+                onCancel={cancelBulk}
+                onDelete={() => requestDelete("timelines", selectedIds.timelines)}
+                onHide={() => handleBulkHide("timelines", selectedIds.timelines)}
+                onStartDelete={() => startBulk("timelines", "delete")}
+                onStartHide={() => startBulk("timelines", "hide")}
+                onToggleAll={() =>
+                  toggleAllSelected(
+                    "timelines",
+                    initialTimelines.filter((item) => item.status !== "deleted").map((item) => item.id)
+                  )
+                }
+              />
+            }
+            title="연표 관리"
+          >
             <TimelineAdminList
               items={initialTimelines}
+              bulkMode={bulkMode?.kind === "timelines" ? bulkMode.operation : null}
               pendingAction={pendingAction}
-              onDelete={(id) => handleDelete("timelines", id)}
+              selectedIds={selectedIds.timelines}
+              onDelete={(id) => requestDelete("timelines", [id])}
               onEdit={(item) => setEditingItem({ kind: "timelines", item })}
+              onSetStatus={(id, status) => handleSetStatus("timelines", id, status)}
+              onToggleSelected={(id) => toggleSelected("timelines", id)}
             />
           </AdminSection>
 
-          <AdminSection title="인물 백과 관리">
+          <AdminSection
+            actions={
+              <BulkSectionActions
+                activeOperation={bulkMode?.kind === "persons" ? bulkMode.operation : null}
+                hasSelection={selectedIds.persons.length > 0}
+                selectableIds={initialPersons.filter((item) => item.status !== "deleted").map((item) => item.id)}
+                selectedIds={selectedIds.persons}
+                onCancel={cancelBulk}
+                onDelete={() => requestDelete("persons", selectedIds.persons)}
+                onStartDelete={() => startBulk("persons", "delete")}
+                onToggleAll={() =>
+                  toggleAllSelected(
+                    "persons",
+                    initialPersons.filter((item) => item.status !== "deleted").map((item) => item.id)
+                  )
+                }
+              />
+            }
+            title="인물 백과 관리"
+          >
             <EncyclopediaAdminList
               items={initialPersons}
               kind="persons"
               pendingAction={pendingAction}
-              onDelete={(id) => handleDelete("persons", id)}
+              bulkMode={bulkMode?.kind === "persons" ? bulkMode.operation : null}
+              selectedIds={selectedIds.persons}
+              onDelete={(id) => requestDelete("persons", [id])}
               onEdit={(item) => setEditingItem({ kind: "persons", item })}
+              onToggleSelected={(id) => toggleSelected("persons", id)}
             />
           </AdminSection>
 
-          <AdminSection title="사건 백과 관리">
+          <AdminSection
+            actions={
+              <BulkSectionActions
+                activeOperation={bulkMode?.kind === "events" ? bulkMode.operation : null}
+                hasSelection={selectedIds.events.length > 0}
+                selectableIds={initialEvents.filter((item) => item.status !== "deleted").map((item) => item.id)}
+                selectedIds={selectedIds.events}
+                onCancel={cancelBulk}
+                onDelete={() => requestDelete("events", selectedIds.events)}
+                onStartDelete={() => startBulk("events", "delete")}
+                onToggleAll={() =>
+                  toggleAllSelected(
+                    "events",
+                    initialEvents.filter((item) => item.status !== "deleted").map((item) => item.id)
+                  )
+                }
+              />
+            }
+            title="사건 백과 관리"
+          >
             <EncyclopediaAdminList
               items={initialEvents}
               kind="events"
               pendingAction={pendingAction}
-              onDelete={(id) => handleDelete("events", id)}
+              bulkMode={bulkMode?.kind === "events" ? bulkMode.operation : null}
+              selectedIds={selectedIds.events}
+              onDelete={(id) => requestDelete("events", [id])}
               onEdit={(item) => setEditingItem({ kind: "events", item })}
+              onToggleSelected={(id) => toggleSelected("events", id)}
             />
           </AdminSection>
         </div>
       )}
+
+      {deleteTarget ? (
+        <DeleteConfirmModal
+          ids={deleteTarget.ids}
+          label={resourceLabel(deleteTarget.kind)}
+          pending={Boolean(pendingAction)}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() =>
+            deleteTarget.ids.length === 1
+              ? handleDelete(deleteTarget.kind, deleteTarget.ids[0])
+              : handleBulkDelete(deleteTarget.kind, deleteTarget.ids)
+          }
+        />
+      ) : null}
     </div>
   );
 }
 
-function AdminSection({ children, title }: { children: React.ReactNode; title: string }) {
+function AdminSection({ actions, children, title }: { actions?: React.ReactNode; children: React.ReactNode; title: string }) {
   return (
     <section className="rounded-lg border border-historine-border bg-historine-panel p-7">
-      <h2 className="mb-6 text-[22px] font-extrabold text-historine-text">{title}</h2>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-[22px] font-extrabold text-historine-text">{title}</h2>
+        {actions}
+      </div>
       {children}
     </section>
   );
@@ -544,14 +719,22 @@ function FormActions({
 
 function TimelineAdminList({
   items,
+  bulkMode,
   pendingAction,
+  selectedIds,
   onDelete,
-  onEdit
+  onEdit,
+  onSetStatus,
+  onToggleSelected
 }: {
   items: TimelineResponseData[];
-  pendingAction: PendingAction | null;
+  bulkMode: "delete" | "hide" | null;
+  pendingAction: string | null;
+  selectedIds: number[];
   onDelete: (id: number) => void;
   onEdit: (item: TimelineResponseData) => void;
+  onSetStatus: (id: number, status: "active" | "hidden") => void;
+  onToggleSelected: (id: number) => void;
 }) {
   if (items.length === 0) {
     return <p className="text-historine-muted">등록된 연표가 없습니다.</p>;
@@ -562,15 +745,32 @@ function TimelineAdminList({
       {items.map((item) => (
         <div className="rounded border border-historine-border bg-[#151515] p-4" key={item.id}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="font-extrabold text-historine-main">
-              {item.year} · {item.type}
+            <div className="flex items-center gap-2 font-extrabold text-historine-main">
+              {bulkMode ? (
+                <input
+                  aria-label={`${item.year} 연표 선택`}
+                  checked={selectedIds.includes(item.id)}
+                  className="h-5 w-5 accent-historine-main"
+                  disabled={item.status === "deleted"}
+                  onChange={() => onToggleSelected(item.id)}
+                  type="checkbox"
+                />
+              ) : null}
+              <span>{item.year} · {item.type}</span>
+              {item.status === "hidden" ? <VisibilityOffIcon aria-label="숨김" className="text-historine-muted" fontSize="small" /> : null}
+              {item.status === "deleted" ? <StatusBadge status="deleted" /> : null}
             </div>
-            <AdminItemActions
-              deleteDisabled={pendingAction === `timelines:delete:${item.id}`}
-              deleteLabel={pendingAction === `timelines:delete:${item.id}` ? <LoadingSpinner label="삭제 중" /> : "삭제"}
-              onDelete={() => onDelete(item.id)}
-              onEdit={() => onEdit(item)}
-            />
+            {bulkMode ? null : (
+              <AdminItemActions
+                deleteDisabled={pendingAction === `timelines:delete:${item.id}`}
+                deleteLabel={pendingAction === `timelines:delete:${item.id}` ? <LoadingSpinner label="삭제 중" /> : "삭제"}
+                hideDisabled={pendingAction === `timelines:status:${item.id}`}
+                hidden={item.status === "hidden"}
+                onDelete={() => onDelete(item.id)}
+                onEdit={() => onEdit(item)}
+                onSetStatus={() => onSetStatus(item.id, item.status === "hidden" ? "active" : "hidden")}
+              />
+            )}
           </div>
           <p className="text-[15px] leading-7 text-historine-muted">{item.content}</p>
         </div>
@@ -582,15 +782,21 @@ function TimelineAdminList({
 function EncyclopediaAdminList({
   items,
   kind,
+  bulkMode,
   pendingAction,
+  selectedIds,
   onDelete,
-  onEdit
+  onEdit,
+  onToggleSelected
 }: {
   items: EncyclopediaResponseData[];
   kind: "persons" | "events";
-  pendingAction: PendingAction | null;
+  bulkMode: "delete" | "hide" | null;
+  pendingAction: string | null;
+  selectedIds: number[];
   onDelete: (id: number) => void;
   onEdit: (item: EncyclopediaResponseData) => void;
+  onToggleSelected: (id: number) => void;
 }) {
   if (items.length === 0) {
     return <p className="text-historine-muted">등록된 항목이 없습니다.</p>;
@@ -602,17 +808,32 @@ function EncyclopediaAdminList({
         <div className="rounded border border-historine-border bg-[#151515] p-4" key={item.id}>
           <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="font-extrabold text-historine-text">{item.title}</div>
+              <div className="flex items-center gap-2 font-extrabold text-historine-text">
+                {bulkMode ? (
+                  <input
+                    aria-label={`${item.title} 선택`}
+                    checked={selectedIds.includes(item.id)}
+                    className="h-5 w-5 accent-historine-main"
+                    disabled={item.status === "deleted"}
+                    onChange={() => onToggleSelected(item.id)}
+                    type="checkbox"
+                  />
+                ) : null}
+                <span>{item.title}</span>
+                {item.status === "deleted" ? <StatusBadge status="deleted" /> : null}
+              </div>
               <div className="mt-1 text-sm text-historine-muted">
                 {item.period} · {item.category}
               </div>
             </div>
-            <AdminItemActions
-              deleteDisabled={pendingAction === `${kind}:delete:${item.id}`}
-              deleteLabel={pendingAction === `${kind}:delete:${item.id}` ? <LoadingSpinner label="삭제 중" /> : "삭제"}
-              onDelete={() => onDelete(item.id)}
-              onEdit={() => onEdit(item)}
-            />
+            {bulkMode ? null : (
+              <AdminItemActions
+                deleteDisabled={pendingAction === `${kind}:delete:${item.id}`}
+                deleteLabel={pendingAction === `${kind}:delete:${item.id}` ? <LoadingSpinner label="삭제 중" /> : "삭제"}
+                onDelete={() => onDelete(item.id)}
+                onEdit={() => onEdit(item)}
+              />
+            )}
           </div>
           <p className="text-[15px] leading-7 text-historine-muted">{item.summary}</p>
         </div>
@@ -621,19 +842,91 @@ function EncyclopediaAdminList({
   );
 }
 
+function BulkSectionActions({
+  activeOperation,
+  hasSelection,
+  selectableIds,
+  selectedIds,
+  onCancel,
+  onDelete,
+  onHide,
+  onStartDelete,
+  onStartHide,
+  onToggleAll
+}: {
+  activeOperation: "delete" | "hide" | null;
+  hasSelection: boolean;
+  selectableIds: number[];
+  selectedIds: number[];
+  onCancel: () => void;
+  onDelete: () => void;
+  onHide?: () => void;
+  onStartDelete: () => void;
+  onStartHide?: () => void;
+  onToggleAll: () => void;
+}) {
+  if (activeOperation) {
+    const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selectedIds.includes(id));
+
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm font-bold text-historine-muted">
+          <input
+            aria-label="전체 선택"
+            checked={allSelected}
+            className="h-5 w-5 accent-historine-main"
+            disabled={selectableIds.length === 0}
+            onChange={onToggleAll}
+            type="checkbox"
+          />
+          전체 선택
+        </label>
+        <button className={cancelButtonClassName} onClick={onCancel} type="button">취소</button>
+        {activeOperation === "hide" ? (
+          <button className={hideButtonClassName} disabled={!hasSelection} onClick={onHide} type="button">숨기기</button>
+        ) : (
+          <button className={filledDangerButtonClassName} disabled={!hasSelection} onClick={onDelete} type="button">삭제</button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-2">
+      {onStartHide ? <button className={smallOutlineButtonClassName} onClick={onStartHide} type="button">숨기기</button> : null}
+      <button className={smallDangerButtonClassName} onClick={onStartDelete} type="button">일괄 삭제</button>
+    </div>
+  );
+}
+
+function StatusBadge({ status: _status }: { status: "deleted" }) {
+  return <span className="rounded border border-red-400/40 px-2 py-0.5 text-xs font-bold text-red-300">삭제됨</span>;
+}
+
 function AdminItemActions({
   deleteDisabled = false,
   deleteLabel = "삭제",
+  hideDisabled = false,
+  hidden = false,
   onDelete,
-  onEdit
+  onEdit,
+  onSetStatus
 }: {
   deleteDisabled?: boolean;
   deleteLabel?: React.ReactNode;
+  hideDisabled?: boolean;
+  hidden?: boolean;
   onDelete: () => void;
   onEdit: () => void;
+  onSetStatus?: () => void;
 }) {
   return (
     <div className="flex gap-2">
+      {onSetStatus ? (
+        <button className={smallOutlineButtonClassName} disabled={hideDisabled} onClick={onSetStatus} type="button">
+          {hideDisabled ? <LoadingSpinner label="처리 중" /> : hidden ? "표시하기" : "숨기기"}
+        </button>
+      ) : null}
       <button className={smallOutlineButtonClassName} onClick={onEdit} type="button">
         수정
       </button>
@@ -709,3 +1002,15 @@ const smallOutlineButtonClassName =
 
 const dangerButtonClassName =
   "rounded border border-red-400/60 px-3 py-2 text-sm font-extrabold text-red-300 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60";
+
+const cancelButtonClassName =
+  "rounded border border-historine-border px-3 py-2 text-sm font-extrabold text-historine-muted transition hover:border-historine-main hover:text-historine-main";
+
+const hideButtonClassName =
+  "rounded bg-historine-main px-3 py-2 text-sm font-extrabold text-historine-bg transition hover:bg-[#8BAFDA] disabled:cursor-not-allowed disabled:opacity-60";
+
+const filledDangerButtonClassName =
+  "rounded bg-red-500 px-3 py-2 text-sm font-extrabold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60";
+
+const smallDangerButtonClassName =
+  "rounded border border-red-400/60 px-3 py-2 text-sm font-extrabold text-red-300 transition hover:bg-red-400/10";

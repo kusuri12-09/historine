@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import { DeleteConfirmModal } from "@/components/delete-confirm-modal";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 import type { EncyclopediaResponseData } from "@/types/api/encyclopedia";
@@ -50,6 +51,7 @@ export function EncyclopediaDetailControls({ item, kind }: EncyclopediaDetailCon
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState<"delete" | "update" | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const label = kind === "persons" ? "인물" : "사건";
   const listHref = kind === "persons" ? "/persons" : "/events";
 
@@ -62,6 +64,7 @@ export function EncyclopediaDetailControls({ item, kind }: EncyclopediaDetailCon
 
     try {
       await requestJson(`/api/admin/${kind}/${item.id}`, "DELETE");
+      setDeleteOpen(false);
       router.push(listHref);
       router.refresh();
     } catch (error) {
@@ -115,12 +118,22 @@ export function EncyclopediaDetailControls({ item, kind }: EncyclopediaDetailCon
         <button
           className={dangerButtonClassName}
           disabled={pending === "delete"}
-          onClick={handleDelete}
+          onClick={() => setDeleteOpen(true)}
           type="button"
         >
           {pending === "delete" ? <LoadingSpinner label="삭제 중" /> : "삭제"}
         </button>
       </div>
+
+      {deleteOpen ? (
+        <DeleteConfirmModal
+          ids={[item.id]}
+          label={label}
+          pending={pending === "delete"}
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={handleDelete}
+        />
+      ) : null}
 
       {message && !editing ? (
         <div

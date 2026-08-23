@@ -10,6 +10,7 @@ import {
 const cachedGetEvents = unstable_cache(
   async (): Promise<EncyclopediaItem[]> => {
     const events = await prisma.event.findMany({
+      where: { status: "active" },
       orderBy: { id: "asc" }
     });
 
@@ -27,8 +28,8 @@ const cachedFindEvent = unstable_cache(
       return null;
     }
 
-    const event = await prisma.event.findUnique({
-      where: { id: parsedId }
+    const event = await prisma.event.findFirst({
+      where: { id: parsedId, status: "active" }
     });
 
     return event ? toEncyclopediaItem(event) : null;
@@ -39,6 +40,11 @@ const cachedFindEvent = unstable_cache(
 
 export async function getEvents(): Promise<EncyclopediaItem[]> {
   return cachedGetEvents();
+}
+
+export async function getAdminEvents(): Promise<EncyclopediaItem[]> {
+  const events = await prisma.event.findMany({ orderBy: { id: "asc" } });
+  return events.map(toEncyclopediaItem);
 }
 
 export async function findEvent(id: string): Promise<EncyclopediaItem | null> {
@@ -54,14 +60,15 @@ export async function findEventsByIds(ids: bigint[]): Promise<EncyclopediaItem[]
     where: {
       id: {
         in: ids
-      }
+      },
+      status: "active"
     }
   });
 
   return events.map(toEncyclopediaItem);
 }
 
-export async function addEvent(item: Omit<EncyclopediaItem, "id">): Promise<EncyclopediaItem> {
+export async function addEvent(item: Omit<EncyclopediaItem, "id" | "status">): Promise<EncyclopediaItem> {
   const event = await prisma.event.create({
     data: item
   });
@@ -73,7 +80,7 @@ export async function addEvent(item: Omit<EncyclopediaItem, "id">): Promise<Ency
 
 export async function updateEvent(
   id: string,
-  item: Omit<EncyclopediaItem, "id">
+  item: Omit<EncyclopediaItem, "id" | "status">
 ): Promise<EncyclopediaItem | null> {
   const parsedId = parseId(id);
 
@@ -95,7 +102,7 @@ export async function updateEvent(
   return event ? toEncyclopediaItem(event) : null;
 }
 
-export async function deleteEvent(id: string): Promise<EncyclopediaItem | null> {
+export async function setEventStatus(id: string, status: "active" | "hidden" | "deleted"): Promise<EncyclopediaItem | null> {
   const parsedId = parseId(id);
 
   if (!parsedId) {
@@ -103,8 +110,9 @@ export async function deleteEvent(id: string): Promise<EncyclopediaItem | null> 
   }
 
   const event = await prisma.event
-    .delete({
-      where: { id: parsedId }
+    .update({
+      where: { id: parsedId },
+      data: { status }
     })
     .catch(() => null);
 
@@ -114,3 +122,5 @@ export async function deleteEvent(id: string): Promise<EncyclopediaItem | null> 
 
   return event ? toEncyclopediaItem(event) : null;
 }
+
+export const deleteEvent = (id: string) => setEventStatus(id, "deleted");

@@ -5,6 +5,7 @@ export type TimelineResponseData = {
   year: number;
   type: "KOREA" | "WORLD";
   content: string;
+  status: "active" | "hidden" | "deleted";
 };
 
 export type GetTimelinesResponse = ApiResponse<TimelineResponseData[]>;

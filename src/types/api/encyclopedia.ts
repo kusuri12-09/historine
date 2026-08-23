@@ -8,6 +8,7 @@ export type EncyclopediaResponseData = {
   tags: string[];
   content: string;
   summary: string;
+  status: "active" | "hidden" | "deleted";
 };
 
 export type GetEncyclopediasResponse = ApiResponse<EncyclopediaResponseData[]>;

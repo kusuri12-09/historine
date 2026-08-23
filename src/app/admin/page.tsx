@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { AdminConsole } from "@/components/admin-console";
-import { getEvents } from "@/repositories/events";
-import { getPersons } from "@/repositories/persons";
-import { getTimelines } from "@/repositories/timelines";
+import { getAdminEvents } from "@/repositories/events";
+import { getAdminPersons } from "@/repositories/persons";
+import { getAdminTimelines } from "@/repositories/timelines";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { isAdminApiEnabled } from "@/lib/admin-config";
 
@@ -15,9 +15,9 @@ export default async function AdminPage() {
 
   const authenticated = await isAdminAuthenticated();
   const [events, persons, timelines] = await Promise.all([
-    getEvents(),
-    getPersons(),
-    getTimelines()
+    getAdminEvents(),
+    getAdminPersons(),
+    getAdminTimelines()
   ]);
 
   return (

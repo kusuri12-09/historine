@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import { DeleteConfirmModal } from "@/components/delete-confirm-modal";
 import { csrfHeader } from "@/lib/client-csrf";
 import type { ApiResponse } from "@/types/api/common";
 import type { TimelineResponseData } from "@/types/api/timeline";
@@ -12,7 +13,7 @@ type Message = {
   text: string;
 };
 
-async function requestJson(url: string, method: "PUT" | "DELETE", body?: unknown) {
+async function requestJson(url: string, method: "PUT" | "PATCH" | "DELETE", body?: unknown) {
   const response = await fetch(url, {
     method,
     headers: {
@@ -34,8 +35,12 @@ async function requestJson(url: string, method: "PUT" | "DELETE", body?: unknown
 export function TimelineItemControls({ item }: { item: TimelineResponseData }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
-  const [pending, setPending] = useState<"delete" | "update" | null>(null);
+  const [pending, setPending] = useState<"delete" | "update" | "status" | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [displayStatus, setDisplayStatus] = useState<"active" | "hidden">(
+    item.status === "hidden" ? "hidden" : "active"
+  );
 
   async function handleDelete() {
     if (pending) {
@@ -46,12 +51,31 @@ export function TimelineItemControls({ item }: { item: TimelineResponseData }) {
 
     try {
       await requestJson(`/api/admin/timelines/${item.id}`, "DELETE");
+      setDeleteOpen(false);
       router.refresh();
     } catch (error) {
       setMessage({
         type: "error",
         text: error instanceof Error ? error.message : "연표 삭제에 실패했습니다."
       });
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function handleStatusChange() {
+    if (pending) return;
+
+    const nextStatus = displayStatus === "hidden" ? "active" : "hidden";
+    setPending("status");
+
+    try {
+      await requestJson(`/api/admin/timelines/${item.id}`, "PATCH", { status: nextStatus });
+      setDisplayStatus(nextStatus);
+      setMessage({ type: "success", text: nextStatus === "hidden" ? "연표를 숨겼습니다." : "연표를 표시했습니다." });
+      if (nextStatus === "active") router.refresh();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "연표 상태 변경에 실패했습니다." });
     } finally {
       setPending(null);
     }
@@ -90,13 +114,21 @@ export function TimelineItemControls({ item }: { item: TimelineResponseData }) {
   return (
     <>
       <div className="flex gap-2 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
+        <button
+          className={outlineButtonClassName}
+          disabled={pending === "status"}
+          onClick={handleStatusChange}
+          type="button"
+        >
+          {pending === "status" ? <LoadingSpinner label="처리 중" /> : displayStatus === "hidden" ? "표시하기" : "숨기기"}
+        </button>
         <button className={outlineButtonClassName} onClick={() => setEditing(true)} type="button">
           수정
         </button>
         <button
           className={dangerButtonClassName}
           disabled={pending === "delete"}
-          onClick={handleDelete}
+          onClick={() => setDeleteOpen(true)}
           type="button"
         >
           {pending === "delete" ? <LoadingSpinner label="삭제 중" /> : "삭제"}
@@ -114,6 +146,16 @@ export function TimelineItemControls({ item }: { item: TimelineResponseData }) {
         >
           {message.text}
         </div>
+      ) : null}
+
+      {deleteOpen ? (
+        <DeleteConfirmModal
+          ids={[item.id]}
+          label="연표"
+          pending={pending === "delete"}
+          onCancel={() => setDeleteOpen(false)}
+          onConfirm={handleDelete}
+        />
       ) : null}
 
       {editing ? (

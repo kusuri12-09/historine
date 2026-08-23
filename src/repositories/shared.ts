@@ -1,3 +1,5 @@
+export type ContentStatus = "active" | "hidden" | "deleted";
+
 export type EncyclopediaItem = {
   id: number;
   title: string;
@@ -6,6 +8,7 @@ export type EncyclopediaItem = {
   tags: string[];
   content: string;
   summary: string;
+  status: ContentStatus;
 };
 
 export function toNumberId(id: bigint) {
@@ -36,6 +39,7 @@ export function toEncyclopediaItem(item: {
   tags: string[];
   content: string;
   summary: string;
+  status: string;
 }): EncyclopediaItem {
   return {
     id: toNumberId(item.id),
@@ -44,6 +48,7 @@ export function toEncyclopediaItem(item: {
     category: item.category,
     tags: item.tags,
     content: item.content,
-    summary: item.summary
+    summary: item.summary,
+    status: item.status as ContentStatus
   };
 }

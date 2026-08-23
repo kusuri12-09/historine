@@ -10,6 +10,7 @@ import {
 const cachedGetPersons = unstable_cache(
   async (): Promise<EncyclopediaItem[]> => {
     const persons = await prisma.person.findMany({
+      where: { status: "active" },
       orderBy: { id: "asc" }
     });
 
@@ -27,8 +28,8 @@ const cachedFindPerson = unstable_cache(
       return null;
     }
 
-    const person = await prisma.person.findUnique({
-      where: { id: parsedId }
+    const person = await prisma.person.findFirst({
+      where: { id: parsedId, status: "active" }
     });
 
     return person ? toEncyclopediaItem(person) : null;
@@ -39,6 +40,11 @@ const cachedFindPerson = unstable_cache(
 
 export async function getPersons(): Promise<EncyclopediaItem[]> {
   return cachedGetPersons();
+}
+
+export async function getAdminPersons(): Promise<EncyclopediaItem[]> {
+  const persons = await prisma.person.findMany({ orderBy: { id: "asc" } });
+  return persons.map(toEncyclopediaItem);
 }
 
 export async function findPerson(id: string): Promise<EncyclopediaItem | null> {
@@ -54,14 +60,15 @@ export async function findPersonsByIds(ids: bigint[]): Promise<EncyclopediaItem[
     where: {
       id: {
         in: ids
-      }
+      },
+      status: "active"
     }
   });
 
   return persons.map(toEncyclopediaItem);
 }
 
-export async function addPerson(item: Omit<EncyclopediaItem, "id">): Promise<EncyclopediaItem> {
+export async function addPerson(item: Omit<EncyclopediaItem, "id" | "status">): Promise<EncyclopediaItem> {
   const person = await prisma.person.create({
     data: item
   });
@@ -73,7 +80,7 @@ export async function addPerson(item: Omit<EncyclopediaItem, "id">): Promise<Enc
 
 export async function updatePerson(
   id: string,
-  item: Omit<EncyclopediaItem, "id">
+  item: Omit<EncyclopediaItem, "id" | "status">
 ): Promise<EncyclopediaItem | null> {
   const parsedId = parseId(id);
 
@@ -95,7 +102,7 @@ export async function updatePerson(
   return person ? toEncyclopediaItem(person) : null;
 }
 
-export async function deletePerson(id: string): Promise<EncyclopediaItem | null> {
+export async function setPersonStatus(id: string, status: "active" | "hidden" | "deleted"): Promise<EncyclopediaItem | null> {
   const parsedId = parseId(id);
 
   if (!parsedId) {
@@ -103,8 +110,9 @@ export async function deletePerson(id: string): Promise<EncyclopediaItem | null>
   }
 
   const person = await prisma.person
-    .delete({
-      where: { id: parsedId }
+    .update({
+      where: { id: parsedId },
+      data: { status }
     })
     .catch(() => null);
 
@@ -114,3 +122,5 @@ export async function deletePerson(id: string): Promise<EncyclopediaItem | null>
 
   return person ? toEncyclopediaItem(person) : null;
 }
+
+export const deletePerson = (id: string) => setPersonStatus(id, "deleted");

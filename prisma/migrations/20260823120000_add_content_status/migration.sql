@@ -1,0 +1,3 @@
+ALTER TABLE "timeline" ADD COLUMN "status" VARCHAR(10) NOT NULL DEFAULT 'active';
+ALTER TABLE "person" ADD COLUMN "status" VARCHAR(10) NOT NULL DEFAULT 'active';
+ALTER TABLE "event" ADD COLUMN "status" VARCHAR(10) NOT NULL DEFAULT 'active';

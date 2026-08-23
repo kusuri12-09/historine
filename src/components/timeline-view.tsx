@@ -27,24 +27,26 @@ function timelineTone(type: "KOREA" | "WORLD") {
 }
 
 function groupTimelines(items: TimelineItem[]) {
-  return items.reduce<TimelineGroup[]>((groups, item) => {
-    const key = `${item.type}:${item.year}`;
-    const lastGroup = groups.at(-1);
+  const groups = new Map<string, TimelineGroup>();
 
-    if (lastGroup?.key === key) {
-      lastGroup.items.push(item);
-      return groups;
+  items.forEach((item) => {
+    const key = `${item.type}:${item.year}`;
+    const existingGroup = groups.get(key);
+
+    if (existingGroup) {
+      existingGroup.items.push(item);
+      return;
     }
 
-    groups.push({
+    groups.set(key, {
       key,
       year: item.year,
       type: item.type,
       items: [item]
     });
+  });
 
-    return groups;
-  }, []);
+  return [...groups.values()];
 }
 
 export async function TimelineView() {

@@ -1,6 +1,19 @@
 import type { CreateEncyclopediaRequest } from "@/types/api/admin/encyclopedia";
 import type { CreateTimelineRequest } from "@/types/api/admin/timeline";
 
+export const contentStatuses = ["active", "hidden", "deleted"] as const;
+export type ContentStatus = (typeof contentStatuses)[number];
+
+export function validateStatusBody(body: unknown) {
+  const status = (body as { status?: unknown } | null)?.status;
+
+  if (!contentStatuses.includes(status as ContentStatus)) {
+    return { success: false as const, error: "상태 값을 확인해주세요." };
+  }
+
+  return { success: true as const, data: { status: status as ContentStatus } };
+}
+
 export function validateTimelineBody(body: unknown) {
   const timeline = body as Partial<CreateTimelineRequest> | null;
 
