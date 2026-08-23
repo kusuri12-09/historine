@@ -84,7 +84,7 @@ npm run prisma:generate
 
 ### 6. 프로덕션 빌드
 
-Vercel 배포에서는 `vercel-build` 스크립트가 자동으로 실행되며, Next.js 빌드 전에
+Vercel 배포에서는 [vercel.json](./vercel.json)의 Build Command가 실행되며, Next.js 빌드 전에
 `prisma migrate deploy`를 실행해 커밋된 마이그레이션을 데이터베이스에 적용합니다.
 Vercel 프로젝트의 `DATABASE_URL`에는 운영용 Neon 연결 문자열을 설정해야 합니다.
 
