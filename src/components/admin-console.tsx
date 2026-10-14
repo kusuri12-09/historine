@@ -544,6 +544,7 @@ export function AdminConsole({
               selectedIds={selectedIds.persons}
               onDelete={(id) => requestDelete("persons", [id])}
               onEdit={(item) => setEditingItem({ kind: "persons", item })}
+              onSetStatus={(id, status) => handleSetStatus("persons", id, status)}
               onToggleSelected={(id) => toggleSelected("persons", id)}
             />
           </AdminSection>
@@ -576,6 +577,7 @@ export function AdminConsole({
               selectedIds={selectedIds.events}
               onDelete={(id) => requestDelete("events", [id])}
               onEdit={(item) => setEditingItem({ kind: "events", item })}
+              onSetStatus={(id, status) => handleSetStatus("events", id, status)}
               onToggleSelected={(id) => toggleSelected("events", id)}
             />
           </AdminSection>
@@ -787,6 +789,7 @@ function EncyclopediaAdminList({
   selectedIds,
   onDelete,
   onEdit,
+  onSetStatus,
   onToggleSelected
 }: {
   items: EncyclopediaResponseData[];
@@ -796,6 +799,7 @@ function EncyclopediaAdminList({
   selectedIds: number[];
   onDelete: (id: number) => void;
   onEdit: (item: EncyclopediaResponseData) => void;
+  onSetStatus: (id: number, status: "active" | "hidden") => void;
   onToggleSelected: (id: number) => void;
 }) {
   if (items.length === 0) {
@@ -820,6 +824,7 @@ function EncyclopediaAdminList({
                   />
                 ) : null}
                 <span>{item.title}</span>
+                {item.status === "hidden" ? <VisibilityOffIcon aria-label="숨김" className="text-historine-muted" fontSize="small" /> : null}
                 {item.status === "deleted" ? <StatusBadge status="deleted" /> : null}
               </div>
               <div className="mt-1 text-sm text-historine-muted">
@@ -830,8 +835,11 @@ function EncyclopediaAdminList({
               <AdminItemActions
                 deleteDisabled={pendingAction === `${kind}:delete:${item.id}`}
                 deleteLabel={pendingAction === `${kind}:delete:${item.id}` ? <LoadingSpinner label="삭제 중" /> : "삭제"}
+                hideDisabled={pendingAction === `${kind}:status:${item.id}`}
+                hidden={item.status === "hidden"}
                 onDelete={() => onDelete(item.id)}
                 onEdit={() => onEdit(item)}
+                onSetStatus={item.status === "deleted" ? undefined : () => onSetStatus(item.id, item.status === "hidden" ? "active" : "hidden")}
               />
             )}
           </div>

@@ -27,7 +27,7 @@ function parseTags(value: FormDataEntryValue | null) {
     .filter(Boolean);
 }
 
-async function requestJson(url: string, method: "PUT" | "DELETE", body?: unknown) {
+async function requestJson(url: string, method: "PUT" | "PATCH" | "DELETE", body?: unknown) {
   const response = await fetch(url, {
     method,
     headers: {
@@ -49,11 +49,26 @@ async function requestJson(url: string, method: "PUT" | "DELETE", body?: unknown
 export function EncyclopediaDetailControls({ item, kind }: EncyclopediaDetailControlsProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
-  const [pending, setPending] = useState<"delete" | "update" | null>(null);
+  const [pending, setPending] = useState<"delete" | "update" | "status" | null>(null);
   const [message, setMessage] = useState<Message | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const label = kind === "persons" ? "인물" : "사건";
   const listHref = kind === "persons" ? "/persons" : "/events";
+
+  // 숨긴 상세는 공개 조회에서 제외되므로 목록으로 돌아간다.
+  async function handleHide() {
+    if (pending) return;
+    setPending("status");
+
+    try {
+      await requestJson(`/api/admin/${kind}/${item.id}`, "PATCH", { status: "hidden" });
+      router.push(listHref);
+      router.refresh();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : `${label} 백과 숨김에 실패했습니다.` });
+      setPending(null);
+    }
+  }
 
   async function handleDelete() {
     if (pending) {
@@ -112,6 +127,9 @@ export function EncyclopediaDetailControls({ item, kind }: EncyclopediaDetailCon
   return (
     <>
       <div className="flex flex-wrap gap-2">
+        <button className={outlineButtonClassName} disabled={Boolean(pending)} onClick={handleHide} type="button">
+          {pending === "status" ? <LoadingSpinner label="처리 중" /> : "숨기기"}
+        </button>
         <button className={outlineButtonClassName} onClick={() => setEditing(true)} type="button">
           수정
         </button>
